@@ -27,7 +27,7 @@
 require_once(dirname(__FILE__) . '../../../config/config.inc.php');
 require_once(dirname(__FILE__) . '../../../init.php');
 
-require_once('Pakettikauppa/Client.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
 
 switch (Tools::getValue('action')) {
     case 'FetchData' :
@@ -40,7 +40,12 @@ switch (Tools::getValue('action')) {
 
     case 'searchPickUpPoints':
 
-        $client = new Client(array('test_mode' => true));
+        if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+            $client = new \Pakettikauppa\Client(array('test_mode' => true));
+        } else {
+            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+        }
+
         $result = $client->searchPickupPoints(Tools::getValue('postcode'));
 
         echo $result;
