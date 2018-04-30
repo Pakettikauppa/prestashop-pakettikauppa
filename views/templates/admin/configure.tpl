@@ -58,21 +58,6 @@ Secret
 
 </div>
 
-
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Base uri
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="base_uri" value="{Configuration::get('PAKETTIKAUPPA_BASE_URI')}"/>
-</div>
-
-</div>
-
-{*
 <div class="form-group">
 
 <label class="control-label col-lg-3">
@@ -98,8 +83,7 @@ Mode
 </div>
 
 </div>
-*}
-<div class="form-group">
+	<div class="form-group">
 
 <label class="control-label col-lg-3">
 
@@ -289,6 +273,7 @@ Vat Code
 
 </form>
 
+{*
 <form id="module_form" class="defaultForm form-horizontal" action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" method="post" enctype="multipart/form-data" novalidate="">
 				<input name="submitPakettikauppaModule" value="1" type="hidden">
 				
@@ -389,7 +374,7 @@ Vat Code
 		
 		
 	</form>
-	
+	*}
 	
 <form id="module_form" class="defaultForm form-horizontal" action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" method="post" enctype="multipart/form-data" novalidate="">
 

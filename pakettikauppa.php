@@ -162,10 +162,9 @@ class Pakettikauppa extends CarrierModule
         if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_API_KEY', Tools::getValue('api_key'));
             Configuration::updateValue('PAKETTIKAUPPA_SECRET', Tools::getValue('secret'));
-            Configuration::updateValue('PAKETTIKAUPPA_BASE_URI', Tools::getValue('base_uri'));
             Configuration::updateValue('PAKETTIKAUPPA_MODE', Tools::getValue('modes'));
 
-            $client = new Client(array('test_mode' => true));
+            $client = new \Pakettikauppa\Client(array('test_mode' => (Tools::getValue('modes') == 1)));
             $result = $client->listShippingMethods();
             $shipping_methods = json_decode($result);
             foreach ($shipping_methods as $shipping_method) {
@@ -178,12 +177,15 @@ class Pakettikauppa extends CarrierModule
 
         $this->context->smarty->assign('module_dir', $this->_path);
 
+        /*
         $warehouse = DB::getInstance()->ExecuteS("select w.id_warehouse, CONCAT(reference, ' - ', name) as name from " . _DB_PREFIX_ . "warehouse w inner join " . _DB_PREFIX_ . "warehouse_shop ws on ws.id_warehouse = w.id_warehouse AND ws.id_shop=" . $this->context->shop->id . " where w.deleted=0 order by w.id_warehouse ASC");
 
         $selected_carriers = DB::getInstance()->ExecuteS('SELECT wc.`id_carrier`,c.name FROM `' . _DB_PREFIX_ . 'warehouse_carrier` wc inner join ' . _DB_PREFIX_ . 'carrier c on wc.`id_carrier`=c.`id_carrier` WHERE wc.`id_warehouse`=' . $warehouse[0]['id_warehouse']);
+*/
+        $warehouse = array();
+        $selected_carriers = array();
 
-
-        $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0 and `id_reference` not in (SELECT wc.`id_carrier` FROM `" . _DB_PREFIX_ . "warehouse_carrier` wc inner join " . _DB_PREFIX_ . "carrier c on wc.`id_carrier`=c.`id_carrier` WHERE wc.`id_warehouse`=" . $warehouse[0]['id_warehouse'] . ")");
+        $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0");
 
         $this->context->smarty->assign(array(
             'warehouses' => $warehouse,
