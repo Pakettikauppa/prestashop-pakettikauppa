@@ -131,6 +131,80 @@
     <div class="panel" id="fieldset_0">
 
         <div class="panel-heading">
+            <i class="icon-cogs"></i> Configure Sending Methods
+        </div>
+
+        <div class="form-wrapper">
+
+<p>Some kind of a list to which shipping methods to use</p>
+        </div>
+
+        <div class="panel-footer">
+            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
+                    class="btn btn-default pull-right">
+                <i class="process-icon-save"></i> Save
+            </button>
+        </div>
+
+    </div>
+</form>
+
+<form id="module_form" class="defaultForm form-horizontal"
+      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
+      method="post" enctype="multipart/form-data" novalidate="">
+
+
+    <div class="panel" id="fieldset_0">
+
+        <div class="panel-heading">
+            <i class="icon-cogs"></i> Pick-up point settings
+        </div>
+
+        <div class="form-wrapper">
+
+        <p>List of pickup-point providers: activate, shipping price, trigger price, triggered price</p>
+
+        </div>
+
+
+        <label class="control-label col-lg-3">
+            How many pick-up points are shown
+        </label>
+
+        <div class="col-lg-6">
+            <select class="form-control" name="pickup_points_count">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+
+
+        <div class="panel-footer">
+            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
+                    class="btn btn-default pull-right">
+                <i class="process-icon-save"></i> Save
+            </button>
+        </div>
+
+    </div>
+</form>
+
+<form id="module_form" class="defaultForm form-horizontal"
+      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
+      method="post" enctype="multipart/form-data" novalidate="">
+
+
+    <div class="panel" id="fieldset_0">
+
+        <div class="panel-heading">
             <i class="icon-cogs"></i> Configure Sender Address
         </div>
 
