@@ -159,7 +159,9 @@ class Pakettikauppa extends CarrierModule
 
             $client = new \Pakettikauppa\Client(array('test_mode' => (Tools::getValue('modes') == 1)));
 
-            // TODO: this is never removing anything.
+            // TODO: this is never removing anything, need to check if it's existings
+            // TODO: handle test-mode/production-mode somehow on this list.
+
             $result = $client->listShippingMethods();
             $shipping_methods = json_decode($result);
             foreach ($shipping_methods as $shipping_method) {
@@ -172,11 +174,6 @@ class Pakettikauppa extends CarrierModule
 
         $this->context->smarty->assign('module_dir', $this->_path);
 
-        /*
-        $warehouse = DB::getInstance()->ExecuteS("select w.id_warehouse, CONCAT(reference, ' - ', name) as name from " . _DB_PREFIX_ . "warehouse w inner join " . _DB_PREFIX_ . "warehouse_shop ws on ws.id_warehouse = w.id_warehouse AND ws.id_shop=" . $this->context->shop->id . " where w.deleted=0 order by w.id_warehouse ASC");
-
-        $selected_carriers = DB::getInstance()->ExecuteS('SELECT wc.`id_carrier`,c.name FROM `' . _DB_PREFIX_ . 'warehouse_carrier` wc inner join ' . _DB_PREFIX_ . 'carrier c on wc.`id_carrier`=c.`id_carrier` WHERE wc.`id_warehouse`=' . $warehouse[0]['id_warehouse']);
-*/
         $warehouse = array();
         $selected_carriers = array();
 
@@ -239,13 +236,14 @@ class Pakettikauppa extends CarrierModule
 
         $carrier->name = $this->l($name . " [" . $code . "]");
         $carrier->is_module = true;
-        $carrier->active = 1;
+        $carrier->active = 0;
         $carrier->range_behavior = 1;
         $carrier->need_range = 1;
         $carrier->shipping_external = true;
         $carrier->range_behavior = 0;
         $carrier->external_module_name = $this->name;
         $carrier->shipping_method = 2;
+        $carrier->url = 'https://www.pakettikauppa.fi/seuranta/?';
 
         foreach (Language::getLanguages() as $lang)
             $carrier->delay[$lang['id_lang']] = $this->l('Super fast delivery');
