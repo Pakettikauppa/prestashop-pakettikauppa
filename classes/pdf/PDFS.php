@@ -1,28 +1,28 @@
 <?php
 /**
-* 2017-2018 Pakettikauppa
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* https://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    Pakettikauppa <asiakaspalvelu@pakettikauppa.fi>
-*  @copyright 2017- Pakettikauppa Oy
-*  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  
-*/
+ * 2017-2018 Pakettikauppa
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ * @author    Pakettikauppa <asiakaspalvelu@pakettikauppa.fi>
+ * @copyright 2017- Pakettikauppa Oy
+ * @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *
+ */
 
 /**
  * @since 1.5
@@ -57,8 +57,8 @@ class PDFS
         if (!($objects instanceof Iterator) && !is_array($objects)) {
             $this->objects = array($objects);
         }
-        
-        if (count($this->objects)>1) { // when bulk mode only
+
+        if (count($this->objects) > 1) { // when bulk mode only
             $this->send_bulk_flag = true;
         }
     }
@@ -119,7 +119,7 @@ class PDFS
     public function getTemplateObject($object)
     {
         $class = false;
-        $class_name = 'HTMLTemplate'.$this->template;
+        $class_name = 'HTMLTemplate' . $this->template;
 
         if (class_exists($class_name)) {
             // Some HTMLTemplateXYZ implementations won't use the third param but this is not a problem (no warning in PHP),
