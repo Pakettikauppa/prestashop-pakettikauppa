@@ -131,32 +131,6 @@
     <div class="panel" id="fieldset_0">
 
         <div class="panel-heading">
-            <i class="icon-cogs"></i> Configure Sending Methods
-        </div>
-
-        <div class="form-wrapper">
-
-<p>Some kind of a list to which shipping methods to use</p>
-        </div>
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
-                    class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
-            </button>
-        </div>
-
-    </div>
-</form>
-
-<form id="module_form" class="defaultForm form-horizontal"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
-      method="post" enctype="multipart/form-data" novalidate="">
-
-
-    <div class="panel" id="fieldset_0">
-
-        <div class="panel-heading">
             <i class="icon-cogs"></i> Pick-up point settings
         </div>
 
