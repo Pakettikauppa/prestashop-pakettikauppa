@@ -22,253 +22,249 @@
 *  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  
 *}
-<form id="module_form" class="defaultForm form-horizontal" action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" method="post" enctype="multipart/form-data" novalidate="">
+<form id="module_form" class="defaultForm form-horizontal"
+      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
+      method="post" enctype="multipart/form-data" novalidate="">
 
 
-<div class="panel" id="fieldset_0">
+    <div class="panel" id="fieldset_0">
 
-<div class="panel-heading">
-<i class="icon-cogs"></i>							Configure API
-</div>
-
-
-<div class="form-wrapper">
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-API Key
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="api_key" value="{Configuration::get('PAKETTIKAUPPA_API_KEY')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Secret
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="secret" value="{Configuration::get('PAKETTIKAUPPA_SECRET')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Mode
-</label>
-
-<div class="col-lg-6">
-    <select name="modes">
-        {if Configuration::get('PAKETTIKAUPPA_MODE')==1}
-            <option value="1" selected="true">Test Mode</option>
-        {else}
-            <option value="1">Test Mode</option>
-        {/if}
-        
-         {if Configuration::get('PAKETTIKAUPPA_MODE')==0}
-            <option value="0" selected="true">Production Mode</option>
-         {else}
-              <option value="0">Production Mode</option>
-         {/if}
-             
-    </select>
-
-</div>
-
-</div>
-	<div class="form-group">
-
-<label class="control-label col-lg-3">
-
-</label>
+        <div class="panel-heading">
+            <i class="icon-cogs"></i> Configure API
+        </div>
 
 
+        <div class="form-wrapper">
 
-<div class="col-lg-9">
+            <div class="form-group">
 
-<div class="form-group">
-<div class="col-lg-9">
-<div class="form-control-static row">
+                <label class="control-label col-lg-3">
+                    API Key
+                </label>
 
-</div>
-</div>
-</div>
+                <div class="col-lg-6">
+                    <input type="text" name="api_key" value="{Configuration::get('PAKETTIKAUPPA_API_KEY')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Secret
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="secret" value="{Configuration::get('PAKETTIKAUPPA_SECRET')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Mode
+                </label>
+
+                <div class="col-lg-6">
+                    <select name="modes">
+                        {if Configuration::get('PAKETTIKAUPPA_MODE')==1}
+                            <option value="1" selected="true">Test Mode</option>
+                        {else}
+                            <option value="1">Test Mode</option>
+                        {/if}
+
+                        {if Configuration::get('PAKETTIKAUPPA_MODE')==0}
+                            <option value="0" selected="true">Production Mode</option>
+                        {else}
+                            <option value="0">Production Mode</option>
+                        {/if}
+
+                    </select>
+
+                </div>
+
+            </div>
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+
+                </label>
 
 
+                <div class="col-lg-9">
+
+                    <div class="form-group">
+                        <div class="col-lg-9">
+                            <div class="form-control-static row">
+
+                            </div>
+                        </div>
+                    </div>
 
 
-</div>
+                </div>
 
-</div>
-
-
-
-</div><!-- /.form-wrapper -->
+            </div>
 
 
+        </div><!-- /.form-wrapper -->
 
-<div class="panel-footer">
-<button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaAPI" class="btn btn-default pull-right">
-<i class="process-icon-save"></i> Save
-</button>
-</div>
 
-</div>
+        <div class="panel-footer">
+            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaAPI"
+                    class="btn btn-default pull-right">
+                <i class="process-icon-save"></i> Save
+            </button>
+        </div>
+
+    </div>
 
 
 </form>
 
-<form id="module_form" class="defaultForm form-horizontal" action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" method="post" enctype="multipart/form-data" novalidate="">
+<form id="module_form" class="defaultForm form-horizontal"
+      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
+      method="post" enctype="multipart/form-data" novalidate="">
 
 
-<div class="panel" id="fieldset_0">
+    <div class="panel" id="fieldset_0">
 
-<div class="panel-heading">
-<i class="icon-cogs"></i>							Configure Sender Address
-</div>
-
-
-<div class="form-wrapper">
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Store Name
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="store_name" value="{Configuration::get('PAKETTIKAUPPA_STORE_NAME')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Address
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="address" value="{Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Post code
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="postcode" value="{Configuration::get('PAKETTIKAUPPA_POSTCODE')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-City
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="city" value="{Configuration::get('PAKETTIKAUPPA_CITY')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Phone
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="phone" value="{Configuration::get('PAKETTIKAUPPA_PHONE')}"/>
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Country
-</label>
-
-<div class="col-lg-6">
-<select name="country">
-	{foreach $countries as $country}
-		{if Configuration::get('PAKETTIKAUPPA_COUNTRY')== $country.iso_code}
-			<option value="{$country.iso_code}" selected="true">{$country.country}</option>
-		{else}
-			<option value="{$country.iso_code}">{$country.country}</option>
-		{/if}
-	{/foreach}
-</select>
-
-</div>
-
-</div>
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Vat Code
-</label>
-
-<div class="col-lg-6">
-<input type="text" name="vat_code" value="{Configuration::get('PAKETTIKAUPPA_VATCODE')}"/>
-</div>
-
-</div>
+        <div class="panel-heading">
+            <i class="icon-cogs"></i> Configure Sender Address
+        </div>
 
 
-<div class="form-group">
+        <div class="form-wrapper">
 
-<label class="control-label col-lg-3">
+            <div class="form-group">
 
-</label>
+                <label class="control-label col-lg-3">
+                    Store Name
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="store_name" value="{Configuration::get('PAKETTIKAUPPA_STORE_NAME')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Address
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="address" value="{Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Post code
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="postcode" value="{Configuration::get('PAKETTIKAUPPA_POSTCODE')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    City
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="city" value="{Configuration::get('PAKETTIKAUPPA_CITY')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Phone
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="phone" value="{Configuration::get('PAKETTIKAUPPA_PHONE')}"/>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Country
+                </label>
+
+                <div class="col-lg-6">
+                    <select name="country">
+                        {foreach $countries as $country}
+                            {if Configuration::get('PAKETTIKAUPPA_COUNTRY')== $country.iso_code}
+                                <option value="{$country.iso_code}" selected="true">{$country.country}</option>
+                            {else}
+                                <option value="{$country.iso_code}">{$country.country}</option>
+                            {/if}
+                        {/foreach}
+                    </select>
+
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="control-label col-lg-3">
+                    Vat Code
+                </label>
+
+                <div class="col-lg-6">
+                    <input type="text" name="vat_code" value="{Configuration::get('PAKETTIKAUPPA_VATCODE')}"/>
+                </div>
+
+            </div>
 
 
+            <div class="form-group">
 
-<div class="col-lg-9">
+                <label class="control-label col-lg-3">
 
-<div class="form-group">
-<div class="col-lg-9">
-<div class="form-control-static row">
-
-</div>
-</div>
-</div>
+                </label>
 
 
+                <div class="col-lg-9">
+
+                    <div class="form-group">
+                        <div class="col-lg-9">
+                            <div class="form-control-static row">
+
+                            </div>
+                        </div>
+                    </div>
 
 
-</div>
+                </div>
 
-</div>
-
-
-
-</div><!-- /.form-wrapper -->
+            </div>
 
 
+        </div><!-- /.form-wrapper -->
 
-<div class="panel-footer">
-<button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender" class="btn btn-default pull-right">
-<i class="process-icon-save"></i> Save
-</button>
-</div>
 
-</div>
+        <div class="panel-footer">
+            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
+                    class="btn btn-default pull-right">
+                <i class="process-icon-save"></i> Save
+            </button>
+        </div>
+
+    </div>
 
 
 </form>
@@ -375,88 +371,87 @@ Vat Code
 		
 	</form>
 	*}
-	
-<form id="module_form" class="defaultForm form-horizontal" action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" method="post" enctype="multipart/form-data" novalidate="">
+
+<form id="module_form" class="defaultForm form-horizontal"
+      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
+      method="post" enctype="multipart/form-data" novalidate="">
 
 
-<div class="panel" id="fieldset_0">
+    <div class="panel" id="fieldset_0">
 
-<div class="panel-heading">
-<i class="icon-cogs"></i>							Shipping Status
-</div>
-
-
-<div class="form-wrapper">
-
-<div class="form-group">
-
-<label class="control-label col-lg-3">
-Order status on which you will be generating shipping
-</label>
+        <div class="panel-heading">
+            <i class="icon-cogs"></i> Shipping Status
+        </div>
 
 
+        <div class="form-wrapper">
 
-<div class="col-lg-9">
+            <div class="form-group">
 
-<select name="shipping_state" class=" fixed-width-xl" id="id_warehouse">
-<option value="">---Select Order State---</option>
-
-{foreach $order_statuses as $order_statuse}
-{if $order_statuse.id_order_state==$shipping_state}
-<option value="{$order_statuse.id_order_state}" selected="true">{$order_statuse.name}</option>
-{else}
-<option value="{$order_statuse.id_order_state}">{$order_statuse.name}</option>
-{/if}
-{/foreach}																                </select>
-
-</div>
-
-</div>
+                <label class="control-label col-lg-3">
+                    Order status on which you will be generating shipping
+                </label>
 
 
-<div class="form-group">
+                <div class="col-lg-9">
 
-<label class="control-label col-lg-3">
+                    <select name="shipping_state" class=" fixed-width-xl" id="id_warehouse">
+                        <option value="">---Select Order State---</option>
 
-</label>
+                        {foreach $order_statuses as $order_statuse}
+                            {if $order_statuse.id_order_state==$shipping_state}
+                                <option value="{$order_statuse.id_order_state}"
+                                        selected="true">{$order_statuse.name}</option>
+                            {else}
+                                <option value="{$order_statuse.id_order_state}">{$order_statuse.name}</option>
+                            {/if}
+                        {/foreach}
+                    </select>
 
+                </div>
 
-
-<div class="col-lg-9">
-
-<div class="form-group">
-<div class="col-lg-9">
-<div class="form-control-static row">
-
-</div>
-</div>
-</div>
-
-
-
-
-</div>
-
-</div>
+            </div>
 
 
+            <div class="form-group">
 
-</div><!-- /.form-wrapper -->
+                <label class="control-label col-lg-3">
+
+                </label>
 
 
+                <div class="col-lg-9">
 
-<div class="panel-footer">
-<button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaShippingState" class="btn btn-default pull-right">
-<i class="process-icon-save"></i> Save
-</button>
-</div>
+                    <div class="form-group">
+                        <div class="col-lg-9">
+                            <div class="form-control-static row">
 
-</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+        </div><!-- /.form-wrapper -->
+
+
+        <div class="panel-footer">
+            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaShippingState"
+                    class="btn btn-default pull-right">
+                <i class="process-icon-save"></i> Save
+            </button>
+        </div>
+
+    </div>
 
 
 </form>
 
 <script>
-{ldelim} var module_dir='{$module_dir}'; {rdelim}
+    {ldelim} var module_dir = '{$module_dir}'; {rdelim}
 </script>
 
