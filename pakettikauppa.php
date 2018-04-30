@@ -164,6 +164,8 @@ class Pakettikauppa extends CarrierModule
             Configuration::updateValue('PAKETTIKAUPPA_MODE', Tools::getValue('modes'));
 
             $client = new \Pakettikauppa\Client(array('test_mode' => (Tools::getValue('modes') == 1)));
+
+            // TODO: this is never removing anything.
             $result = $client->listShippingMethods();
             $shipping_methods = json_decode($result);
             foreach ($shipping_methods as $shipping_method) {
@@ -197,102 +199,7 @@ class Pakettikauppa extends CarrierModule
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
-        return $this->show_msg() . $output;//.$this->renderForm();
-    }
-
-    /**
-     * Create the form that will be displayed in the configuration of your module.
-     */
-    protected function renderForm()
-    {
-        $helper = new HelperForm();
-
-        $helper->show_toolbar = false;
-        $helper->table = $this->table;
-        $helper->module = $this;
-        $helper->default_form_language = $this->context->language->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-
-        $helper->identifier = $this->identifier;
-        $helper->submit_action = 'submitPakettikauppaModule';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-
-        $helper->tpl_vars = array(
-            'fields_value' => $this->getConfigFormValues(), /* Add values for your inputs */
-            'languages' => $this->context->controller->getLanguages(),
-            'id_language' => $this->context->language->id,
-        );
-
-        return $helper->generateForm(array($this->getConfigForm()));
-    }
-
-    /**
-     * Create the structure of your form.
-     */
-    protected function getConfigForm()
-    {
-        $this->fields_form = array('form' => array(
-            'legend' => array(
-                'title' => $this->l('Settings'),
-                'icon' => 'icon-cogs',
-            ),
-            'input' => array(
-                array(
-                    'type' => 'select',
-                    'label' => $this->l('Select Warehouse'),
-                    'name' => 'id_warehouse',
-                    'desc' => $this->l('Select Warehouse to assign Pakettikauppa Carriers'),
-                    'options' => array(
-                        'query' => $warehouse,
-                        'id' => 'id_warehouse',
-                        'name' => 'name'
-                    )
-                ),
-                array(
-                    'type' => 'swap',
-                    'label' => $this->l('Carriers'),
-                    'name' => 'ids_carriers',
-                    'required' => false,
-                    'multiple' => true,
-                    'options' => array(
-                        'query' => Carrier::getCarriers($this->context->language->id, false, false, false, null, Carrier::CARRIERS_MODULE),
-                        'id' => 'id_reference',
-                        'name' => 'name'
-                    ),
-                    'hint' => array(
-                        $this->l('Associated carriers.'),
-                        $this->l('You can choose which carriers can ship orders from particular warehouses.'),
-                        $this->l('If you do not select any carrier, all the carriers will be able to ship from this warehouse.'),
-                    ),
-                    'desc' => $this->l('If no carrier is selected, all the carriers will be allowed to ship from this warehouse. Use CTRL+Click to select more than one carrier.'),
-                ),
-            ),
-            'submit' => array(
-                'title' => $this->l('Save'),
-            ),
-        )
-        );
-
-        return $this->fields_form;
-    }
-
-    /**
-     * Set values for the inputs.
-     */
-    protected function getConfigFormValues()
-    {
-        return array(
-            'PAKETTIKAUPPA_LIVE_MODE' => Configuration::get('PAKETTIKAUPPA_LIVE_MODE', true),
-            'PAKETTIKAUPPA_ACCOUNT_EMAIL' => Configuration::get('PAKETTIKAUPPA_ACCOUNT_EMAIL', 'contact@prestashop.com'),
-            'PAKETTIKAUPPA_ACCOUNT_PASSWORD' => Configuration::get('PAKETTIKAUPPA_ACCOUNT_PASSWORD', null),
-            'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
-            'PAKETTIKAUPPA_API_KEY' => Configuration::get('PAKETTIKAUPPA_API_KEY'),
-            'PAKETTIKAUPPA_SECRET' => Configuration::get('PAKETTIKAUPPA_SECRET'),
-            'PAKETTIKAUPPA_MODE' => Configuration::get('PAKETTIKAUPPA_MODE')
-
-        );
+        return $this->show_msg() . $output;
     }
 
     protected function show_msg()
@@ -316,20 +223,10 @@ class Pakettikauppa extends CarrierModule
      */
     protected function postProcess()
     {
-        $set_carrier_to_warehouse = new Warehouse(Tools::getValue('id_warehouse'));
-        $set_carrier_to_warehouse->setCarriers(Tools::getValue('ids_carriers_selected'));
         $this->context->cookie->__set('success_msg', $this->displayConfirmation($this->l('Save successfully.')));
         Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
 
-        /*
-        $form_values = $this->getConfigFormValues();
-       
-        
-        foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
-        }
-        */
     }
 
     public function getOrderShippingCost($params, $shipping_cost)
