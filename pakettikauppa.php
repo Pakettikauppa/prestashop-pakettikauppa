@@ -27,13 +27,13 @@
 if (!defined('_PS_VERSION_')) {
     exit;
 }
-require_once('Pakettikauppa/Client.php');
-require_once('Pakettikauppa/Shipment.php');
-require_once('Pakettikauppa/Shipment/Sender.php');
-require_once('Pakettikauppa/Shipment/Receiver.php');
-require_once('Pakettikauppa/Shipment/AdditionalService.php');
-require_once('Pakettikauppa/Shipment/Info.php');
-require_once('Pakettikauppa/Shipment/Parcel.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Sender.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Receiver.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/AdditionalService.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Info.php');
+require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Parcel.php');
 
 class Pakettikauppa extends CarrierModule
 {
