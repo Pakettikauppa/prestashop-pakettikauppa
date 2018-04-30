@@ -231,23 +231,12 @@ class Pakettikauppa extends CarrierModule
 
     public function getOrderShippingCost($params, $shipping_cost)
     {
-        if (Context::getContext()->customer->logged == true) {
-            $id_address_delivery = Context::getContext()->cart->id_address_delivery;
-            $address = new Address($id_address_delivery);
-
-            /**
-             * Send the details through the API
-             * Return the price sent by the API
-             */
-            return 10;
-        }
-
-        return $shipping_cost;
+        return false;
     }
 
     public function getOrderShippingCostExternal($params)
     {
-        return true;
+        return false;
     }
 
     protected function addCarrier($name, $code)
