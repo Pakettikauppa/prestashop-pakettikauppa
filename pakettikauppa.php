@@ -75,7 +75,6 @@ class Pakettikauppa extends CarrierModule
 
         Configuration::updateValue('PAKETTIKAUPPA_API_KEY', '00000000-0000-0000-0000-000000000000');
         Configuration::updateValue('PAKETTIKAUPPA_SECRET', '1234567890ABCDEF');
-        Configuration::updateValue('PAKETTIKAUPPA_BASE_URI', 'https://apitest.pakettikauppa.fi');
         Configuration::updateValue('PAKETTIKAUPPA_MODE', '1');
 
         Configuration::updateValue('PAKETTIKAUPPA_LIVE_MODE', false);
@@ -291,7 +290,7 @@ class Pakettikauppa extends CarrierModule
             'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
             'PAKETTIKAUPPA_API_KEY' => Configuration::get('PAKETTIKAUPPA_API_KEY'),
             'PAKETTIKAUPPA_SECRET' => Configuration::get('PAKETTIKAUPPA_SECRET'),
-            'PAKETTIKAUPPA_BASE_URI' => Configuration::get('PAKETTIKAUPPA_BASE_URI')
+            'PAKETTIKAUPPA_MODE' => Configuration::get('PAKETTIKAUPPA_MODE')
 
         );
     }
@@ -445,10 +444,13 @@ class Pakettikauppa extends CarrierModule
 
     public function hookDisplayCarrierList($params)
     {
-
-
         $display = "none";
-        $client = new Client(array('test_mode' => true));
+        if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+            $client = new \Pakettikauppa\Client(array('test_mode' => true));
+        } else {
+            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+        }
+
         //$result = $client->searchPickupPoints($params['address']->postcode);
         $result = $client->searchPickupPoints('00100');
         $methods = $client->listShippingMethods();
@@ -528,7 +530,11 @@ class Pakettikauppa extends CarrierModule
             $shipment->addParcel($parcel);
             $shipment->addAdditionalService($additional_service);
 
-            $client = new Client(array('test_mode' => true));
+            if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+                $client = new \Pakettikauppa\Client(array('test_mode' => true));
+            } else {
+                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+            }
 
             try {
                 if ($client->createTrackingCode($shipment)) {
