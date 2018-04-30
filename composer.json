@@ -1,0 +1,5 @@
+{
+    "require": {
+        "pakettikauppa/api-library": "dev-master"
+    }
+}
