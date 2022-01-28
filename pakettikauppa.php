@@ -162,13 +162,24 @@ class Pakettikauppa extends CarrierModule
             // TODO: this is never removing anything, need to check if it's existings
             // TODO: handle test-mode/production-mode somehow on this list.
 
-            $result = $client->listShippingMethods();
-            $shipping_methods = json_decode($result);
-            foreach ($shipping_methods as $shipping_method) {
-                $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
-                $this->addZones($carrier);
-                $this->addGroups($carrier);
-                $this->addRanges($carrier);
+            $shipping_methods = $client->listShippingMethods();
+            $carriers_count = 0;
+            if (is_array($shipping_methods)) {
+                foreach ($shipping_methods as $shipping_method) {
+                    $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
+                    $this->addZones($carrier);
+                    $this->addGroups($carrier);
+                    $this->addRanges($carrier);
+                    $carriers_count++;
+                }
+            } else {
+                $this->context->cookie->__set('error_msg', $this->l('Failed to create carriers due to invalid list received'));
+            }
+
+            if ($carriers_count > 0) {
+                $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully and created %s carriers'), $carriers_count));
+            } else {
+                $this->context->cookie->__set('success_msg', $this->l('Saved successfully'));
             }
         }
 
@@ -195,17 +206,22 @@ class Pakettikauppa extends CarrierModule
 
     protected function show_msg()
     {
+        $output = '';
+
         if (isset($this->context->cookie->success_msg)) {
             $msg = $this->context->cookie->success_msg;
             // delete old messages
             unset($this->context->cookie->success_msg);
-            return $msg;
-        } elseif (isset($this->context->cookie->error_msg)) {
+            $output .= $this->displayConfirmation($msg);
+        }
+        if (isset($this->context->cookie->error_msg)) {
             $msg = $this->context->cookie->error_msg;
             // delete old messages
             unset($this->context->cookie->error_msg);
-            return $msg;
+            $output .= $this->displayError($msg);
         }
+
+        return $output;
     }
 
 
@@ -214,7 +230,7 @@ class Pakettikauppa extends CarrierModule
      */
     protected function postProcess()
     {
-        $this->context->cookie->__set('success_msg', $this->displayConfirmation($this->l('Save successfully.')));
+        $this->context->cookie->__set('success_msg', $this->l('Save successfully.'));
         Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
 
@@ -222,7 +238,7 @@ class Pakettikauppa extends CarrierModule
 
     public function getOrderShippingCost($params, $shipping_cost)
     {
-        return false;
+        return $shipping_cost;
     }
 
     public function getOrderShippingCostExternal($params)
@@ -237,7 +253,7 @@ class Pakettikauppa extends CarrierModule
         $carrier->name = $this->l($name . " [" . $code . "]");
         $carrier->is_module = true;
         $carrier->active = 0;
-        $carrier->range_behavior = 1;
+        //$carrier->range_behavior = 1;
         $carrier->need_range = 1;
         $carrier->shipping_external = true;
         $carrier->range_behavior = 0;
@@ -250,7 +266,7 @@ class Pakettikauppa extends CarrierModule
 
         if ($carrier->add() == true) {
             @copy(dirname(__FILE__) . '/views/img/carrier_image.jpg', _PS_SHIP_IMG_DIR_ . '/' . (int)$carrier->id . '.jpg');
-            Configuration::updateValue('MYSHIPPINGMODULE_CARRIER_ID', (int)$carrier->id);
+            Configuration::updateValue('PAKETTIKAUPPA_CARRIER_ID', (int)$carrier->id);
             return $carrier;
         }
 
@@ -313,17 +329,14 @@ class Pakettikauppa extends CarrierModule
     public function hookDisplayCarrierList($params)
     {
         $display = "none";
-        if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+        if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
             $client = new \Pakettikauppa\Client(array('test_mode' => true));
         } else {
             $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
         }
 
-        //$result = $client->searchPickupPoints($params['address']->postcode);
-        $result = $client->searchPickupPoints('00100');
+        $result = $client->searchPickupPoints($params['address']->postcode);
         $methods = $client->listShippingMethods();
-        $result = json_decode($result);
-        $methods = json_decode($methods);
         $method_id_list = array();
         foreach ($methods as $method) {
             $method_id_list[] = $method->shipping_method_code;
