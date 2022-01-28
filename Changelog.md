@@ -6,3 +6,4 @@
 
 ### Fixed
 - fixed the module operation
+- added existing carrier check before carrier create

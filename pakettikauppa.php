@@ -132,6 +132,7 @@ class Pakettikauppa extends CarrierModule
      */
     public function getContent()
     {
+        $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0");
         /**
          * If values have been submitted in the form, process.
          */
@@ -166,11 +167,20 @@ class Pakettikauppa extends CarrierModule
             $carriers_count = 0;
             if (is_array($shipping_methods)) {
                 foreach ($shipping_methods as $shipping_method) {
-                    $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
-                    $this->addZones($carrier);
-                    $this->addGroups($carrier);
-                    $this->addRanges($carrier);
-                    $carriers_count++;
+                    $exists = false;
+                    foreach ($carriers as $carr) {
+                        if (strpos($carr['name'], '[' . $shipping_method->shipping_method_code . ']') !== false) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+                    if (!$exists) {
+                        $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
+                        $this->addZones($carrier);
+                        $this->addGroups($carrier);
+                        $this->addRanges($carrier);
+                        $carriers_count++;
+                    }
                 }
             } else {
                 $this->context->cookie->__set('error_msg', $this->l('Failed to create carriers due to invalid list received'));
@@ -185,10 +195,8 @@ class Pakettikauppa extends CarrierModule
 
         $this->context->smarty->assign('module_dir', $this->_path);
 
-        $warehouse = array();
-        $selected_carriers = array();
-
-        $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0");
+        $warehouse = array(); //TODO: Need to make
+        $selected_carriers = array(); //TODO: Need to make
 
         $this->context->smarty->assign(array(
             'warehouses' => $warehouse,
