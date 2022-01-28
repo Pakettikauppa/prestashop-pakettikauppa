@@ -24,13 +24,14 @@
  *
  */
 
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Sender.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Receiver.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/AdditionalService.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Info.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Parcel.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/SimpleXMLElement.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Sender.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Receiver.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/AdditionalService.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Info.php');
+require_once(dirname(__FILE__) . '/../../vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Parcel.php');
 
 
 
@@ -115,21 +116,26 @@ class AdminPakettikauppaController extends ModuleAdminController
 
         parent::init();
         $this->bootstrap = true;
-        $id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
+        //$id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
         if (Tools::getValue('submitAction') == 'generateShippingSlipPDF') {
+            $id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
             $order = new Order((int)$id_order[0]['id_order']);
             if (!Validate::isLoadedObject($order)) {
                 throw new PrestaShopException('Can\'t load Order object');
             }
             $order_invoice_collection = $order->getInvoicesCollection();
 
-            if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+            if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
                 $client = new \Pakettikauppa\Client(array('test_mode' => true));
             } else {
                 $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
             }
 
-            $sender = new Sender();
+            if (empty(Configuration::get('PAKETTIKAUPPA_POSTCODE'))) {
+                die($this->l('Sender postcode is required'));
+            }
+
+            $sender = new \Pakettikauppa\Shipment\Sender();
             $sender->setName1(Configuration::get('PAKETTIKAUPPA_STORE_NAME'));
             $sender->setAddr1(Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS'));
             $sender->setPostcode(Configuration::get('PAKETTIKAUPPA_POSTCODE'));
@@ -138,34 +144,34 @@ class AdminPakettikauppaController extends ModuleAdminController
             $sender->setCountry(Configuration::get('PAKETTIKAUPPA_COUNTRY'));
 
 
-            $receiver = new Receiver();
-            $address = new Address($params["cart"]->id_address_delivery);
-            $customer_email = new Customer($params["cart"]->id_customer);
+            $receiver = new \Pakettikauppa\Shipment\Receiver();
+            $address = new Address($order->id_address_delivery);
+            $customer_data = new Customer($order->id_customer);
             $receiver->setName1($address->firstname . " " . $address->lastname);
             $receiver->setAddr1($address->address1 . " " . $address->address2);
             $receiver->setPostcode($address->postcode);
             $receiver->setCity($address->city);
             $receiver->setCountry(DB::getInstance()->ExecuteS('select iso_code from ' . _DB_PREFIX_ . 'country where id_country=' . $address->id_country)[0]['iso_code']);
-            $receiver->setEmail($customer_email->email);
+            $receiver->setEmail($customer_data->email);
             $receiver->setPhone($address->phone);
 
 
-            $total_weight = DB::getInstance()->ExecuteS('SELECT o.reference,sum(od.product_weight) as weight FROM `ps_order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $params['id_order']);
+            $total_weight = DB::getInstance()->ExecuteS('SELECT o.reference,sum(od.product_weight) as weight FROM `ps_order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $order->id);
 
-            $info = new Info();
+            $info = new \Pakettikauppa\Shipment\Info();
             $info->setReference('12344');
 
-            $ship_detail = DB::getInstance()->ExecuteS('SELECT p.`id_pickup_point`,p.`shipping_method_code`,substring_index(substring_index(c.name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'pakettikauppa` p left join ' . _DB_PREFIX_ . 'carrier c on p.`shipping_method_code`=c.id_carrier WHERE `id_cart`=' . $params["cart"]->id);
+            $ship_detail = DB::getInstance()->ExecuteS('SELECT p.`id_pickup_point`,p.`shipping_method_code`,substring_index(substring_index(c.name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'pakettikauppa` p left join ' . _DB_PREFIX_ . 'carrier c on p.`shipping_method_code`=c.id_carrier WHERE `id_cart`=' . $order->id_cart);
 
-            $additional_service = new AdditionalService();
+            $additional_service = new \Pakettikauppa\Shipment\AdditionalService();
             $additional_service->addSpecifier('pickup_point_id', $ship_detail[0]['id_pickup_point']);
 
-            $parcel = new Parcel();
+            $parcel = new \Pakettikauppa\Shipment\Parcel();
             $parcel->setReference($total_weight[0]['reference']);
             $parcel->setWeight($total_weight[0]['weight']); // kg
             $parcel->setContents('Stuff and thingies');
 
-            $shipment = new Shipment();
+            $shipment = new \Pakettikauppa\Shipment();
             $shipment->setShippingMethod($ship_detail[0]['code']); // shipping_method_code that you can get by using listShippingMethods()
             $shipment->setSender($sender);
             $shipment->setReceiver($receiver);
@@ -173,7 +179,7 @@ class AdminPakettikauppaController extends ModuleAdminController
             $shipment->addParcel($parcel);
             $shipment->addAdditionalService($additional_service);
 
-            if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
+            if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
                 $client = new \Pakettikauppa\Client(array('test_mode' => true));
             } else {
                 $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
@@ -181,14 +187,24 @@ class AdminPakettikauppaController extends ModuleAdminController
 
             try {
                 if ($client->createTrackingCode($shipment)) {
-                    DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_track="' . $shipment->getTrackingCode() . '" where id_cart=' . $params["cart"]->id);
+                    $tracking_code = $shipment->getTrackingCode();
+                    DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_track="' . $shipment->getTrackingCode() . '" where id_cart=' . $order->id_cart);
                     if ($client->fetchShippingLabel($shipment)) {
-                        // TODO set the headers
-                        echo base64_decode($shipment->getPdf());
+                        $pdf = base64_decode($shipment->getPdf());
+                        $content_disposition = 'inline';
+                        $filename = $tracking_code;
+                        
+                        header('Content-Type: application/pdf');
+                        header('Content-Description: File Transfer');
+                        header('Content-Transfer-Encoding: binary');
+                        header("Content-Disposition: $content_disposition;filename=\"{$filename}.pdf\"");
+                        header('Content-Length: ' . strlen($pdf));
+                        
+                        die($pdf);
                     }
                 }
             } catch (Exception $ex) {
-                //echo $ex->getMessage();
+                die($ex->getMessage());
             }
         }
     }
