@@ -104,15 +104,15 @@ class Pakettikauppa extends CarrierModule
     */
     public function installModuleTab()
     {
+        $parent_tab = Tab::getIdFromClassName('AdminShipping') ? Tab::getIdFromClassName('AdminShipping') : Tab::getIdFromClassName('Shipping');
         $tab = new Tab;
         $langs = language::getLanguages();
         foreach ($langs as $lang)
             $tab->name[$lang['id_lang']] = 'Pakettikauppa';
         $tab->module = $this->name;
-        $tab->id_parent = 0;
+        $tab->id_parent = $parent_tab;
         $tab->class_name = 'AdminPakettikauppa';
         return $tab->save();
-
     }
 
     /**
