@@ -78,7 +78,7 @@ class Pakettikauppa extends CarrierModule
             $this->registerHook('header') &&
             $this->registerHook('backOfficeHeader') &&
             $this->registerHook('updateCarrier') && $this->registerHook('actionValidateOrder') && $this->registerHook('actionOrderStatusUpdate') && $this->installModuleTab() &&
-            $this->registerHook('displayCarrierList');
+            $this->registerHook('displayCarrierList') && $this->registerHook('displayCarrierExtraContent');
     }
 
     public function uninstall()
@@ -334,16 +334,25 @@ class Pakettikauppa extends CarrierModule
         $this->context->controller->addCSS($this->_path . '/views/css/front.css');
     }
 
+    public function hookDisplayCarrierExtraContent($params)
+    {
+        return $this->hookDisplayCarrierList($params);
+    }
+
+
     public function hookDisplayCarrierList($params)
     {
         $display = "none";
+
         if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
             $client = new \Pakettikauppa\Client(array('test_mode' => true));
         } else {
             $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
         }
 
-        $result = $client->searchPickupPoints($params['address']->postcode);
+        $address = new Address($params['cart']->id_address_delivery);
+
+        $result = $client->searchPickupPoints($address->postcode);
         $methods = $client->listShippingMethods();
         $method_id_list = array();
         foreach ($methods as $method) {
