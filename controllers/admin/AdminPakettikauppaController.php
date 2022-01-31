@@ -46,6 +46,7 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->_defaultOrderWay = 'DESC';
         $this->list_no_link = true;
 
+        parent::__construct();
 
         $this->context = Context::getContext();
         date_default_timezone_set("Asia/Calcutta");
@@ -99,9 +100,6 @@ class AdminPakettikauppaController extends ModuleAdminController
             ),
 
         );
-
-        parent::__construct();
-
     }
 
     public function initToolbar()
@@ -209,12 +207,11 @@ class AdminPakettikauppaController extends ModuleAdminController
         }
     }
 
-    public function setMedia()
+    public function setMedia($isNewTheme = false)
     {
         parent::setMedia(); // JS files
 
-        Tools::addJS(_PS_MODULE_DIR_ . 'purchaseorder/views/js/back.js');
-
+        //Tools::addJS(_PS_MODULE_DIR_ . 'purchaseorder/views/js/back.js');
     }
 
 
