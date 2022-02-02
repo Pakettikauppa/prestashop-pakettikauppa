@@ -86,9 +86,9 @@ class Pakettikauppa extends CarrierModule
         Configuration::deleteByName('PAKETTIKAUPPA_LIVE_MODE');
         Configuration::deleteByName('PAKETTIKAUPPA_SHIPPING_STATE');
 
-        $carr = DB::getInstance()->ExecuteS("Select id_carrier from " . _DB_PREFIX_ . "carrier where external_module_name='" . $this->name . "'");
+        $carriers = DB::getInstance()->ExecuteS("Select id_carrier from " . _DB_PREFIX_ . "carrier where external_module_name='" . $this->name . "'");
 
-        foreach ($carr as $carrier) {
+        foreach ($carriers as $carrier) {
             $delete_carrier = new Carrier($carrier['id_carrier']);
             $delete_carrier->delete();
         }
@@ -194,18 +194,18 @@ class Pakettikauppa extends CarrierModule
         }
 
         $this->context->smarty->assign('module_dir', $this->_path);
-
-        $warehouse = array(); //TODO: Need to make
+        $warehouses = array(); //TODO: Need to make
+        //$warehouses = Warehouse::getWarehouses();
         $selected_carriers = array(); //TODO: Need to make
 
         $this->context->smarty->assign(array(
-            'warehouses' => $warehouse,
+            'warehouses' => $warehouses,
             'selected_carriers' => $selected_carriers,
             'carriers' => $carriers,
             'order_statuses' => OrderState::getOrderStates((int)Context::getContext()->language->id),
             'token' => Tools::getValue('token'),
             'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
-            'countries' => Country::getCountries($this->context->language->id)
+            'countries' => Country::getCountries($this->context->language->id),
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
@@ -320,7 +320,9 @@ class Pakettikauppa extends CarrierModule
     public function hookBackOfficeHeader()
     {
         if (Tools::getValue('module_name') == $this->name) {
+            $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . 'views/js/back.js');
+            
             $this->context->controller->addCSS($this->_path . 'views/css/back.css');
         }
     }
