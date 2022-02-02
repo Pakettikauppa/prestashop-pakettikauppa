@@ -8,3 +8,4 @@
 - added existing carrier check before carrier create
 - fixed admin tab parent class
 - Adapted to Prestashop 1.7
+- fixed problems in module configuration page

@@ -211,7 +211,7 @@ class AdminPakettikauppaController extends ModuleAdminController
     {
         parent::setMedia(); // JS files
 
-        //Tools::addJS(_PS_MODULE_DIR_ . 'purchaseorder/views/js/back.js');
+        //$this->context->controller->addJS(_PS_MODULE_DIR_ . 'pakettikauppa/views/js/back.js');
     }
 
 

@@ -25,43 +25,37 @@
 
 $(document).ready(function() {
 
-$('#id_warehouse').on('change',function(){
-
-$.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "FetchData",
-                     id_warehouse:$('#id_warehouse').val()
-		},
-		success: function(jsonData)
-		{
-			var data=JSON.parse(jsonData);
-			$('#selectedSwap option').remove();
-			for(var i=0;i<data['selected_carriers'].length;i++)
-			{
-				$('#selectedSwap').append($('<option>', {
-    					value: data['selected_carriers'][i]["id_carrier"],
-    					text: data['selected_carriers'][i]["name"]
-				}));
-			}
-			$('#availableSwap option').remove();
-			for(var i=0;i<data['carriers'].length;i++)
-			{
-				$('#availableSwap').append($('<option>', {
-    					value: data['carriers'][i]["id_reference"],
-    					text: data['carriers'][i]["name"]
-				}));
-			}
-			
-			console.log(data);
-		}
-	});
-
-});
-
-
-
+  $('#id_warehouse').on('change',function(){
+    $.ajax({
+      type: 'POST',
+      url: module_dir+'/ajax.php',
+      data: {
+        ajax: 1,
+        action: "FetchData",
+        id_warehouse:$('#id_warehouse').val()
+      },
+      success: function(jsonData) {
+        var data=JSON.parse(jsonData);
+        $('#selectedSwap option').remove();
+        for(var i=0;i<data['selected_carriers'].length;i++)
+        {
+          $('#selectedSwap').append($('<option>', {
+            value: data['selected_carriers'][i]["id_carrier"],
+            text: data['selected_carriers'][i]["name"]
+          }));
+        }
+        $('#availableSwap option').remove();
+        for(var i=0;i<data['carriers'].length;i++)
+        {
+          $('#availableSwap').append($('<option>', {
+            value: data['carriers'][i]["id_reference"],
+            text: data['carriers'][i]["name"]
+          }));
+        }
+        
+        console.log(data);
+      }
+    });
+  });
 
 });
