@@ -50,13 +50,17 @@ class AdminPakettikauppaController extends ModuleAdminController
 
         $this->context = Context::getContext();
         date_default_timezone_set("Asia/Calcutta");
-        $this->_select = "o.id_order,concat(c.firstname,' ',c.lastname) as customer_name,ROUND(o.total_paid,2) as total,a.id_track,a.id_cart as PDF";
-
+        
+        $this->_select = "o.id_order,
+            concat(c.firstname,' ',c.lastname) as customer_name,
+            ROUND(o.total_paid,2) as total,
+            a.id_track,
+            a.id_cart as PDF";
         $this->_join = 'inner join ' . _DB_PREFIX_ . 'orders o on a.id_cart= o.id_cart inner join ' . _DB_PREFIX_ . 'customer c on o.id_customer=c.id_customer';
+        $this->_orderBy = 'id_order';
+        $this->_orderWay = 'DESC';
 
         $this->fields_list = array(
-
-
             'id_order' => array(
                 'title' => $this->l('Order ID'),
                 'width' => 'auto',
@@ -77,7 +81,7 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'title' => $this->l('Total Amount'),
                 'width' => 'auto',
                 'type' => 'text',
-                'search' => true,
+                'search' => false,
                 'align' => 'center',
                 'havingFilter' => true
             ),
@@ -94,9 +98,10 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'width' => 'auto',
                 'type' => 'text',
                 'callback' => 'printPDFIcons',
-                'search' => true,
+                'search' => false,
                 'align' => 'center',
-                'havingFilter' => true
+                'havingFilter' => true,
+                'orderby' => false,
             ),
 
         );
@@ -126,7 +131,7 @@ class AdminPakettikauppaController extends ModuleAdminController
             if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
                 $client = new \Pakettikauppa\Client(array('test_mode' => true));
             } else {
-                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
             }
 
             if (empty(Configuration::get('PAKETTIKAUPPA_POSTCODE'))) {
@@ -162,12 +167,15 @@ class AdminPakettikauppaController extends ModuleAdminController
             $ship_detail = DB::getInstance()->ExecuteS('SELECT p.`id_pickup_point`,p.`shipping_method_code`,substring_index(substring_index(c.name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'pakettikauppa` p left join ' . _DB_PREFIX_ . 'carrier c on p.`shipping_method_code`=c.id_carrier WHERE `id_cart`=' . $order->id_cart);
 
             $additional_service = new \Pakettikauppa\Shipment\AdditionalService();
-            $additional_service->addSpecifier('pickup_point_id', $ship_detail[0]['id_pickup_point']);
+            if (!empty($ship_detail[0]['id_pickup_point'])) {
+                $additional_service->addSpecifier('pickup_point_id', $ship_detail[0]['id_pickup_point']);
+                $additional_service->setServiceCode('2106');
+            }
 
             $parcel = new \Pakettikauppa\Shipment\Parcel();
             $parcel->setReference($total_weight[0]['reference']);
             $parcel->setWeight($total_weight[0]['weight']); // kg
-            $parcel->setContents('Stuff and thingies');
+            //$parcel->setContents('Stuff and thingies'); //TODO: Make comment
 
             $shipment = new \Pakettikauppa\Shipment();
             $shipment->setShippingMethod($ship_detail[0]['code']); // shipping_method_code that you can get by using listShippingMethods()
@@ -180,7 +188,7 @@ class AdminPakettikauppaController extends ModuleAdminController
             if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
                 $client = new \Pakettikauppa\Client(array('test_mode' => true));
             } else {
-                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
             }
 
             try {

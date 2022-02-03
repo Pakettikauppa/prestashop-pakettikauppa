@@ -22,6 +22,7 @@
 *  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  
 *}
+
 <form id="module_form" class="defaultForm form-horizontal"
       action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
       method="post" enctype="multipart/form-data" novalidate="">
@@ -54,7 +55,7 @@
                     Mode
                 </label>
                 <div class="col-lg-6">
-                    <select name="modes">
+                    <select name="modes" onchange="alert('CAUTION! Mode change will delete all existing Pakettikauppa carriers');">
                         {if Configuration::get('PAKETTIKAUPPA_MODE')==1}
                             <option value="1" selected="true">Test Mode</option>
                         {else}
