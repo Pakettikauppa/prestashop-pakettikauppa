@@ -22,7 +22,7 @@
 *  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  
 *}
-<div class="row" style="display:{$display}">
+<div class="row pakettikauppa-extracarrier" style="display:{$display}">
    <div class="col-md-12">
    <p class="carrier_title">Search Pickup Points</p>
    </div>
@@ -40,7 +40,7 @@
        {if $pick_up_points|@count == 0}
             There is no any pickup points near your address
        {/if}
-       
+
      <table>
         
         {foreach $pick_up_points as $pick_up_point}
@@ -52,11 +52,10 @@
                     <table>
                         <tr>
                             <td>
-                            <font color="black"><b>Name: </b></font>{$pick_up_point->name}<br>
-                             <font color="black"><b>Description: </b></font>{$pick_up_point->description}<br>
-                             <font color="black"><b>Distance: </b></font>
-                             {$pick_up_point->distance}<br>
-                             
+                                <font color="black"><b>Name: </b></font>{$pick_up_point->name}<br>
+                                <font color="black"><b>Description: </b></font>{$pick_up_point->description}<br>
+                                <font color="black"><b>Address: </b></font>{$pick_up_point->street_address}, {$pick_up_point->city}<br>
+                                <font color="black"><b>Distance: </b></font>{$pick_up_point->distance} m.<br>
                             </td>
                         </tr>
                     </table>
@@ -154,7 +153,7 @@ function selecteds(code)
 		}
 	});
 }
-	selecteds(first_check);
+	//selecteds(first_check);
 $("input[name='id_pick_up_point']").on('click', function(el) {
     //console.log($(el.target).val());
     $.ajax({

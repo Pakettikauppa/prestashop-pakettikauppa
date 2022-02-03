@@ -9,3 +9,5 @@
 - fixed admin tab parent class
 - Adapted to Prestashop 1.7
 - fixed problems in module configuration page
+- fixed pickup point selection
+- changed Pakettikauppa table structure in database

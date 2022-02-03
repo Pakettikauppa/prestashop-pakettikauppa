@@ -67,9 +67,11 @@ class Pakettikauppa extends CarrierModule
 
         include(dirname(__FILE__) . '/sql/install.php');
 
-        Configuration::updateValue('PAKETTIKAUPPA_API_KEY', '00000000-0000-0000-0000-000000000000');
-        Configuration::updateValue('PAKETTIKAUPPA_SECRET', '1234567890ABCDEF');
-        Configuration::updateValue('PAKETTIKAUPPA_MODE', '1');
+        if (empty(Configuration::get('PAKETTIKAUPPA_API_KEY'))) {
+            Configuration::updateValue('PAKETTIKAUPPA_API_KEY', '00000000-0000-0000-0000-000000000000');
+            Configuration::updateValue('PAKETTIKAUPPA_SECRET', '1234567890ABCDEF');
+            Configuration::updateValue('PAKETTIKAUPPA_MODE', '1');
+        }
 
         Configuration::updateValue('PAKETTIKAUPPA_LIVE_MODE', false);
         Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', NULL);
@@ -86,18 +88,21 @@ class Pakettikauppa extends CarrierModule
         Configuration::deleteByName('PAKETTIKAUPPA_LIVE_MODE');
         Configuration::deleteByName('PAKETTIKAUPPA_SHIPPING_STATE');
 
+        $this->delete_carriers();
+        $this->uninstallModuleTab();
+
+        return parent::uninstall();
+    }
+
+    private function delete_carriers()
+    {
         $carriers = DB::getInstance()->ExecuteS("Select id_carrier from " . _DB_PREFIX_ . "carrier where external_module_name='" . $this->name . "'");
 
         foreach ($carriers as $carrier) {
             $delete_carrier = new Carrier($carrier['id_carrier']);
             $delete_carrier->delete();
         }
-        $this->uninstallModuleTab();
-
-
-        return parent::uninstall();
     }
-
 
     /*
     Install module Tab
@@ -154,11 +159,22 @@ class Pakettikauppa extends CarrierModule
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
+            $old_mode = Configuration::get('PAKETTIKAUPPA_MODE');
+            
             Configuration::updateValue('PAKETTIKAUPPA_API_KEY', Tools::getValue('api_key'));
             Configuration::updateValue('PAKETTIKAUPPA_SECRET', Tools::getValue('secret'));
             Configuration::updateValue('PAKETTIKAUPPA_MODE', Tools::getValue('modes'));
 
-            $client = new \Pakettikauppa\Client(array('test_mode' => (Tools::getValue('modes') == 1)));
+            if ($old_mode != Tools::getValue('modes')) {
+                $this->delete_carriers();
+            }
+
+            $api_configs = array(
+                'test_mode' => (Tools::getValue('modes') == 1),
+                'api_key' => Tools::getValue('api_key'),
+                'secret' => Tools::getValue('secret'),
+            );
+            $client = new \Pakettikauppa\Client($api_configs);
 
             // TODO: this is never removing anything, need to check if it's existings
             // TODO: handle test-mode/production-mode somehow on this list.
@@ -187,7 +203,11 @@ class Pakettikauppa extends CarrierModule
             }
 
             if ($carriers_count > 0) {
-                $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully and created %s carriers'), $carriers_count));
+                if ($old_mode != Tools::getValue('modes')) {
+                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully, deleted old carriers and created new %s carriers'), $carriers_count));
+                } else {
+                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully and created %s carriers'), $carriers_count));
+                }
             } else {
                 $this->context->cookie->__set('success_msg', $this->l('Saved successfully'));
             }
@@ -345,36 +365,51 @@ class Pakettikauppa extends CarrierModule
     public function hookDisplayCarrierList($params)
     {
         $display = "none";
+        $pickup_points = array();
 
         if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
             $client = new \Pakettikauppa\Client(array('test_mode' => true));
         } else {
-            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
         }
 
         $address = new Address($params['cart']->id_address_delivery);
+        $country_iso = Country::getIsoById($address->id_country);
 
-        $result = $client->searchPickupPoints($address->postcode);
         $methods = $client->listShippingMethods();
+        if (!is_array($methods)) {
+            $methods = array();
+        }
+
         $method_id_list = array();
         foreach ($methods as $method) {
-            $method_id_list[] = $method->shipping_method_code;
+            if ($method->has_pickup_points) {
+                $method_id_list[] = $method->shipping_method_code;
+            }
         }
+
         $ship_detail = DB::getInstance()->ExecuteS('SELECT substring_index(substring_index(name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'carrier` where id_carrier=' . $params['cart']->id_carrier);
 
         if (in_array($ship_detail[0]['code'], $method_id_list)) {
             $display = "block";
+            $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $ship_detail[0]['code'], 5);
         }
 
 
         DB::getInstance()->Execute('INSERT INTO ' . _DB_PREFIX_ . 'pakettikauppa (id_cart,shipping_method_code) VALUES(' . $params['cart']->id . ',' . $params['cart']->id_carrier . ') ON DUPLICATE KEY UPDATE shipping_method_code=' . $params['cart']->id_carrier);
-        if (count($result) != 0) {
-
-            DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_pickup_point=' . $result[0]->pickup_point_id . ' where id_cart=' . $params['cart']->id);
+        
+        if (count($pickup_points) != 0) {
+            DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_pickup_point=' . $pickup_points[0]->pickup_point_id . ' where id_cart=' . $params['cart']->id);
         }
 
-        $this->context->smarty->assign(array('pick_up_points' => $result, 'module_dir' => $this->_path, 'id_cart' => $params['cart']->id, 'display' => $display));
+        $this->context->smarty->assign(array(
+            'pick_up_points' => $pickup_points,
+            'module_dir' => $this->_path,
+            'id_cart' => $params['cart']->id,
+            'display' => $display
+        ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/front/carrier_list.tpl');
+        
         return $output;
     }
 }
