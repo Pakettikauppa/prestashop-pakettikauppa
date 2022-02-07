@@ -116,10 +116,9 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function init()
     {
-
         parent::init();
         $this->bootstrap = true;
-        //$id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
+
         if (Tools::getValue('submitAction') == 'generateShippingSlipPDF') {
             $id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
             $order = new Order((int)$id_order[0]['id_order']);
@@ -162,7 +161,10 @@ class AdminPakettikauppaController extends ModuleAdminController
             $total_weight = DB::getInstance()->ExecuteS('SELECT o.reference,sum(od.product_weight) as weight FROM `ps_order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $order->id);
 
             $info = new \Pakettikauppa\Shipment\Info();
-            $info->setReference('12344');
+            $info->setReference($order->id);
+            //$info->setReference($order->reference); //Or reference
+            $currency = new CurrencyCore($order->id_currency);
+            $info->setCurrency($currency->iso_code);
 
             $ship_detail = DB::getInstance()->ExecuteS('SELECT p.`id_pickup_point`,p.`shipping_method_code`,substring_index(substring_index(c.name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'pakettikauppa` p left join ' . _DB_PREFIX_ . 'carrier c on p.`shipping_method_code`=c.id_carrier WHERE `id_cart`=' . $order->id_cart);
 
