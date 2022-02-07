@@ -11,3 +11,4 @@
 - fixed problems in module configuration page
 - fixed pickup point selection
 - changed Pakettikauppa table structure in database
+- added order id and currency to shipment info
