@@ -27,11 +27,13 @@
 if (!defined('_PS_VERSION_')) {
     exit;
 }
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
+
+include_once(dirname(__FILE__) . '/init.php');
 
 class Pakettikauppa extends CarrierModule
 {
     protected $config_form = false;
+    protected $core;
 
     public function __construct()
     {
@@ -52,6 +54,8 @@ class Pakettikauppa extends CarrierModule
         $this->description = $this->l('Pakettikauppa Shipping Module provide you best shipping service in your country');
 
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+
+        $this->core = new PS_Pakettikauppa();
     }
 
     /**
@@ -65,7 +69,7 @@ class Pakettikauppa extends CarrierModule
             return false;
         }
 
-        include(dirname(__FILE__) . '/sql/install.php');
+        $this->core->sql->install();
 
         if (empty(Configuration::get('PAKETTIKAUPPA_API_KEY'))) {
             Configuration::updateValue('PAKETTIKAUPPA_API_KEY', '00000000-0000-0000-0000-000000000000');
@@ -91,16 +95,29 @@ class Pakettikauppa extends CarrierModule
         $this->delete_carriers();
         $this->uninstallModuleTab();
 
+        $this->core->sql->uninstall();
+
         return parent::uninstall();
     }
 
     private function delete_carriers()
     {
-        $carriers = DB::getInstance()->ExecuteS("Select id_carrier from " . _DB_PREFIX_ . "carrier where external_module_name='" . $this->name . "'");
+        $carriers = DB::getInstance()->ExecuteS("Select id_carrier, id_reference from " . _DB_PREFIX_ . "carrier where external_module_name='" . $this->name . "'");
 
+        $deleted_references = array();
         foreach ($carriers as $carrier) {
             $delete_carrier = new Carrier($carrier['id_carrier']);
             $delete_carrier->delete();
+
+            if (!in_array($carrier['id_reference'], $deleted_references)) {
+                $this->core->sql->delete_row(array(
+                    'table' => 'methods',
+                    'where' => array(
+                        'id_carrier_reference' => $carrier['id_reference'],
+                    ),
+                ));
+                $deleted_references[] = $carrier['id_reference'];
+            }
         }
     }
 
@@ -176,26 +193,19 @@ class Pakettikauppa extends CarrierModule
             );
             $client = new \Pakettikauppa\Client($api_configs);
 
-            // TODO: this is never removing anything, need to check if it's existings
-            // TODO: handle test-mode/production-mode somehow on this list.
-
             $shipping_methods = $client->listShippingMethods();
             $carriers_count = 0;
             if (is_array($shipping_methods)) {
                 foreach ($shipping_methods as $shipping_method) {
-                    $exists = false;
-                    foreach ($carriers as $carr) {
-                        if (strpos($carr['name'], '[' . $shipping_method->shipping_method_code . ']') !== false) {
-                            $exists = true;
-                            break;
-                        }
-                    }
+                    $exists = $this->core->carrier->check_if_association_exist($shipping_method->shipping_method_code);
                     if (!$exists) {
                         $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
                         $this->addZones($carrier);
                         $this->addGroups($carrier);
                         $this->addRanges($carrier);
                         $carriers_count++;
+
+                        $this->core->carrier->associate_method_with_carrier($shipping_method, $carrier->id);
                     }
                 }
             } else {
@@ -361,46 +371,64 @@ class Pakettikauppa extends CarrierModule
         return $this->hookDisplayCarrierList($params);
     }
 
-
     public function hookDisplayCarrierList($params)
     {
         $display = "none";
         $pickup_points = array();
 
-        if (Configuration::get('PAKETTIKAUPPA_MODE') == 1) {
-            $client = new \Pakettikauppa\Client(array('test_mode' => true));
-        } else {
-            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
-        }
+        $client = $this->core->api->load_client();
 
         $address = new Address($params['cart']->id_address_delivery);
         $country_iso = Country::getIsoById($address->id_country);
+        $carrier = new Carrier($params['cart']->id_carrier);
 
-        $methods = $client->listShippingMethods();
-        if (!is_array($methods)) {
-            $methods = array();
+        $ship_detail = $this->core->sql->get_rows(array(
+          'table' => 'methods',
+          'get_values' => array(
+            'code' => 'method_code',
+            'has_pp' => 'has_pp',
+          ),
+          'where' => array(
+            'id_carrier_reference' => $carrier->id_reference,
+          ),
+        ));
+        $selected_method = (isset($ship_detail[0])) ? $ship_detail[0] : false;
+
+        if ($selected_method === false) {
+          return;
         }
 
-        $method_id_list = array();
-        foreach ($methods as $method) {
-            if ($method->has_pickup_points) {
-                $method_id_list[] = $method->shipping_method_code;
-            }
+        if ($selected_method['has_pp']) {
+          $display = "block";
+          $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], 5);
         }
 
-        $ship_detail = DB::getInstance()->ExecuteS('SELECT substring_index(substring_index(name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'carrier` where id_carrier=' . $params['cart']->id_carrier);
-
-        if (in_array($ship_detail[0]['code'], $method_id_list)) {
-            $display = "block";
-            $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $ship_detail[0]['code'], 5);
-        }
-
-
-        DB::getInstance()->Execute('INSERT INTO ' . _DB_PREFIX_ . 'pakettikauppa (id_cart,shipping_method_code) VALUES(' . $params['cart']->id . ',' . $params['cart']->id_carrier . ') ON DUPLICATE KEY UPDATE shipping_method_code=' . $params['cart']->id_carrier);
+        $this->core->sql->insert_row(array(
+            'table' => 'main',
+            'values' => array(
+                'id_cart' => $params['cart']->id,
+                'id_carrier' => $params['cart']->id_carrier,
+                'method_code' => $selected_method['code'],
+            ),
+            'on_duplicate' => array(
+                'id_carrier' => $params['cart']->id_carrier,
+                'method_code' => $selected_method['code'],
+            ),
+        ));
         
-        if (count($pickup_points) != 0) {
-            DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_pickup_point=' . $pickup_points[0]->pickup_point_id . ' where id_cart=' . $params['cart']->id);
+        $pickup_point_id = 0;
+        if (count($pickup_points) > 0) {
+            $pickup_point_id = $pickup_points[0]->pickup_point_id;
         }
+        $this->core->sql->update_row(array(
+            'table' => 'main',
+            'update' => array(
+                'pickup_point_id' => $pickup_point_id,
+            ),
+            'where' => array(
+                'id_cart' => $params['cart']->id,
+            ),
+        ));
 
         $this->context->smarty->assign(array(
             'pick_up_points' => $pickup_points,

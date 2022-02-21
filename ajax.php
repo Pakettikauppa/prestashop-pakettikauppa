@@ -27,7 +27,10 @@
 require_once(dirname(__FILE__) . '../../../config/config.inc.php');
 require_once(dirname(__FILE__) . '../../../init.php');
 
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
+include_once(dirname(__FILE__) . '/init.php');
+$class_pakettikauppa = new PS_Pakettikauppa();
+
+ob_clean();
 
 switch (Tools::getValue('action')) {
     case 'FetchData' :
@@ -39,26 +42,43 @@ switch (Tools::getValue('action')) {
         break;
 
     case 'searchPickUpPoints':
+        $client = $class_pakettikauppa->api->load_client();
+        $cart = Context::getContext()->cart;
 
-        if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
-            $client = new \Pakettikauppa\Client(array('test_mode' => true));
-        } else {
-            $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
-        }
+        $selected_method = $class_pakettikauppa->sql->get_single_row(array(
+          'table' => 'main',
+          'get_values' => array(
+            'code' => 'method_code',
+          ),
+          'where' => array(
+            'id_cart' => $cart->id,
+          ),
+        ));
 
-        $result = $client->searchPickupPoints(Tools::getValue('postcode'));
+        $address = new Address($cart->id_address_delivery);
+        $country_iso = Country::getIsoById($address->id_country);
 
-        echo $result;
+        $result = $client->searchPickupPoints(Tools::getValue('postcode'), null, $country_iso, $selected_method['code'], 5);
 
+        echo json_encode($result);
         break;
 
     case 'selectPickUpPoints':
-
-        $result = DB::getInstance()->Execute('INSERT INTO ' . _DB_PREFIX_ . 'pakettikauppa (id_cart,id_pickup_point,id_track,shipping_method_code) VALUES(' . Tools::getValue('id_cart') . ', ' . Tools::getValue('code') . ', 0,' . rtrim(Tools::getValue('shipping_method_code'), ',') . ') ON DUPLICATE KEY UPDATE id_pickup_point=' . Tools::getValue('code') . ', id_track="", shipping_method_code=' . rtrim(Tools::getValue('shipping_method_code'), ','));
+        $result = $class_pakettikauppa->sql->insert_row(array(
+            'table' => 'main',
+            'values' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+                'pickup_point_id' => Tools::getValue('code'),
+                'id_carrier' => rtrim(Tools::getValue('shipping_method_code')),
+            ),
+            'on_duplicate' => array(
+                'pickup_point_id' => Tools::getValue('code'),
+                'id_carrier' => preg_replace('/[^0-9]/', '', Tools::getValue('shipping_method_code')),
+            ),
+        )); 
 
         if ($result) {
             echo true;
         }
-
         break;
 }
