@@ -62,7 +62,7 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->fields_list = array(
             'id_order' => array(
                 'title' => $this->l('Order ID'),
-                'width' => 'auto',
+                'class' => 'fixed-width-xs',
                 'type' => 'text',
                 'search' => true,
                 'align' => 'center',
@@ -78,7 +78,7 @@ class AdminPakettikauppaController extends ModuleAdminController
             ),
             'total' => array(
                 'title' => $this->l('Total Amount'),
-                'width' => 'auto',
+                'class' => 'fixed-width-xs',
                 'type' => 'text',
                 'search' => false,
                 'align' => 'center',
