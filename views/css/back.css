@@ -25,3 +25,27 @@
 * Don't forget to prefix your containers with your own identifier
 * to avoid any conflicts with others containers.
 */
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
+
+.help-block .variable_row {
+  display: block;
+  margin-bottom: 5px;
+}
+.help-block .variable_row:last-child {
+  margin-bottom: 0;
+}
+.help-block .variable_row.clickable code {
+  cursor: pointer;
+}
+.help-block .variable_row.clickable code:hover {
+  background-color: #ddd;
+}

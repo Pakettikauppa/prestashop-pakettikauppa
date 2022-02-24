@@ -162,8 +162,9 @@ class Pakettikauppa extends CarrierModule
             $this->postProcess();
         }
 
-        if (((bool)Tools::isSubmit('submitPakettikauppaShippingState')) == true) {
+        if (((bool)Tools::isSubmit('submitPakettikauppaShippingLabels')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', Tools::getValue('shipping_state'));
+            Configuration::updateValue('PAKETTIKAUPPA_LABEL_COMMENT', Tools::getValue('label_comment'));
         }
         if (((bool)Tools::isSubmit('submitPakettikauppaSender')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_STORE_NAME', Tools::getValue('store_name'));
@@ -173,6 +174,10 @@ class Pakettikauppa extends CarrierModule
             Configuration::updateValue('PAKETTIKAUPPA_PHONE', Tools::getValue('phone'));
             Configuration::updateValue('PAKETTIKAUPPA_COUNTRY', Tools::getValue('country'));
             Configuration::updateValue('PAKETTIKAUPPA_VATCODE', Tools::getValue('vat_code'));
+        }
+
+        if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
+            Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
@@ -236,6 +241,11 @@ class Pakettikauppa extends CarrierModule
             'token' => Tools::getValue('token'),
             'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
             'countries' => Country::getCountries($this->context->language->id),
+            'max_pickup' => 10,
+            'label_comment_variables' => array(
+                '{order_id}' => $this->l('Order ID'),
+                '{order_reference}' => $this->l('Order reference'),
+            ),
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 

@@ -179,7 +179,10 @@ class AdminPakettikauppaController extends ModuleAdminController
             $parcel = new \Pakettikauppa\Shipment\Parcel();
             $parcel->setReference($total_weight[0]['reference']);
             $parcel->setWeight($total_weight[0]['weight']); // kg
-            //$parcel->setContents('Stuff and thingies'); //TODO: Make comment
+            $label_comment = Configuration::get('PAKETTIKAUPPA_LABEL_COMMENT');
+            $label_comment = str_replace('{order_id}', $order->id, $label_comment);
+            $label_comment = str_replace('{order_reference}', $order->reference, $label_comment);
+            $parcel->setContents($label_comment);
 
             $shipment = new \Pakettikauppa\Shipment();
             $shipment->setShippingMethod($ship_detail[0]['code']); // shipping_method_code that you can get by using listShippingMethods()

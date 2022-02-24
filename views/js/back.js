@@ -58,4 +58,9 @@ $(document).ready(function() {
     });
   });
 
+  $(document).on('click', '.help-block .variable_row.clickable code', function() {
+    var field_id = '#' + $(this).closest('.variable_row').data('for');
+    var field = $(field_id);
+    field.val(field.val() + $(this).html());
+  });
 });
