@@ -24,7 +24,7 @@
 *}
 <div class="row pakettikauppa-extracarrier" style="display:{$display}">
    <div class="col-md-12">
-   <p class="carrier_title">Search Pickup Points</p>
+   <p class="carrier_title">{l s='Search Pickup Points' mod='pakettikauppa'}</p>
    </div>
 
    <div class="col-md-3">
@@ -32,13 +32,13 @@
    </div>
 
    <div class="col-md-9">
-        <input class="button btn btn-outline " type="Button" value="Search" id="check" onclick="search_pickup()"/>
+        <input class="button btn btn-outline " type="button" value="{l s='Search' mod='pakettikauppa'}" id="check" onclick="search_pickup()"/>
         <input type="hidden" id="id_carts" value="{$id_cart}"/>
 
    </div>
    <div class="col-md-9" id="pickuppoints" style="padding-top:10px">
        {if $pick_up_points|@count == 0}
-            There is no any pickup points near your address
+            {l s='There is no any pickup points near your address' mod='pakettikauppa'}
        {/if}
 
      <table>
@@ -52,10 +52,10 @@
                     <table>
                         <tr>
                             <td>
-                                <font color="black"><b>Name: </b></font>{$pick_up_point->name}<br>
-                                <font color="black"><b>Description: </b></font>{$pick_up_point->description}<br>
-                                <font color="black"><b>Address: </b></font>{$pick_up_point->street_address}, {$pick_up_point->city}<br>
-                                <font color="black"><b>Distance: </b></font>{$pick_up_point->distance} m.<br>
+                                <font color="black"><b>{l s='Name' mod='pakettikauppa'}: </b></font>{$pick_up_point->name}<br>
+                                <font color="black"><b>{l s='Description' mod='pakettikauppa'}: </b></font>{$pick_up_point->description}<br>
+                                <font color="black"><b>{l s='Address' mod='pakettikauppa'}: </b></font>{$pick_up_point->street_address}, {$pick_up_point->city}<br>
+                                <font color="black"><b>{l s='Distance' mod='pakettikauppa'}: </b></font>{$pick_up_point->distance} m.<br>
                             </td>
                         </tr>
                     </table>

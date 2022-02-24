@@ -52,8 +52,6 @@ $(document).ready(function() {
             text: data['carriers'][i]["name"]
           }));
         }
-        
-        console.log(data);
       }
     });
   });

@@ -297,7 +297,7 @@ class Pakettikauppa extends CarrierModule
     {
         $carrier = new Carrier();
 
-        $carrier->name = $this->l($name . " [" . $code . "]");
+        $carrier->name = $name . " [" . $code . "]";
         $carrier->is_module = true;
         $carrier->active = 0;
         //$carrier->range_behavior = 1;

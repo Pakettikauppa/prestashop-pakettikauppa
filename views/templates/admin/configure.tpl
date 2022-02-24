@@ -57,7 +57,8 @@
                     {l s='Mode' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
-                    <select name="modes" onchange="alert('CAUTION! Mode change will delete all existing Pakettikauppa carriers');">
+                    {assign var="alert_message" value="{l s='CAUTION! Mode change will delete all existing Pakettikauppa carriers' mod='pakettikauppa'}"}
+                    <select name="modes" onchange="alert('{$alert_message}');">
                         <option value="1" {if Configuration::get('PAKETTIKAUPPA_MODE')==1}selected{/if}>{l s='Test mode' mod='pakettikauppa'}</option>
                         <option value="0" {if Configuration::get('PAKETTIKAUPPA_MODE')==0}selected{/if}>{l s='Production mode' mod='pakettikauppa'}</option>
                     </select>
@@ -71,7 +72,7 @@
                     <div class="form-group">
                         <div class="col-lg-9">
                             <div class="form-control-static row">
-                                Saving the settings in this section creates the missing carriers
+                                {l s='Saving the settings in this section creates the missing carriers' mod='pakettikauppa'}
                             </div>
                         </div>
                     </div>
@@ -83,7 +84,7 @@
         <div class="panel-footer">
             <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaAPI"
                 class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
+                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
             </button>
         </div>
 
@@ -103,7 +104,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Store Name
+                    {l s='Store Name' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="store_name" value="{Configuration::get('PAKETTIKAUPPA_STORE_NAME')}"/>
@@ -112,7 +113,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Address
+                    {l s='Address' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="address" value="{Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS')}"/>
@@ -121,7 +122,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Post code
+                    {l s='Post code' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="postcode" value="{Configuration::get('PAKETTIKAUPPA_POSTCODE')}"/>
@@ -130,7 +131,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    City
+                    {l s='City' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="city" value="{Configuration::get('PAKETTIKAUPPA_CITY')}"/>
@@ -139,7 +140,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Phone
+                    {l s='Phone' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="phone" value="{Configuration::get('PAKETTIKAUPPA_PHONE')}"/>
@@ -148,7 +149,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Country
+                    {l s='Country' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <select name="country">
@@ -165,7 +166,7 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Vat Code
+                    {l s='Vat Code' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-6">
                     <input type="text" name="vat_code" value="{Configuration::get('PAKETTIKAUPPA_VATCODE')}"/>
@@ -192,7 +193,7 @@
         <div class="panel-footer">
             <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
                     class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
+                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
             </button>
         </div>
 
@@ -205,7 +206,7 @@
     <div class="panel" id="fieldset_0">
         
         <div class="panel-heading">
-            <i class="icon-cogs"></i> Checkout settings
+            <i class="icon-cogs"></i> {l s='Checkout settings' mod='pakettikauppa'}
         </div>
 
         <div class="form-wrapper">
@@ -213,7 +214,7 @@
             <div class="form-group">
                 <label class="control-label col-lg-3"></label>
                 <div class="col-lg-9">
-                    <p>List of pickup-point providers: activate, shipping price, trigger price, triggered price</p>
+                    <p>{l s='List of pickup-point providers: activate, shipping price, trigger price, triggered price' mod='pakettikauppa'}</p>
                 </div>
             </div>
 
@@ -244,7 +245,7 @@
         <div class="panel-footer">
             <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaFront"
                     class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
+                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
             </button>
         </div>
 
@@ -260,14 +261,14 @@
     <div class="panel" id="fieldset_0">
 
         <div class="panel-heading">
-            <i class="icon-cogs"></i> Configure Warehouse & Carrier
+            <i class="icon-cogs"></i> {l s='Configure Warehouse & Carrier' mod='pakettikauppa'}
         </div>
  
         <div class="form-wrapper">
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    Select Warehouse
+                    {l s='Select Warehouse' mod='pakettikauppa'}
                 </label>
                 <div class="col-lg-9">
                     <select name="id_warehouse" class=" fixed-width-xl" id="id_warehouse">
@@ -276,7 +277,7 @@
                         {/foreach}
                     </select>
                     <p class="help-block">
-                        Select Warehouse to assign Pakettikauppa Carriers
+                        {l s='Select Warehouse to assign Pakettikauppa Carriers' mod='pakettikauppa'}
                     </p>
                 </div>
             </div>
@@ -284,7 +285,7 @@
             <div class="form-group">
                 <label class="control-label col-lg-3">
                     <span class="label-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="Associated carriers">
-                        Carriers
+                        {l s='Carriers' mod='pakettikauppa'}
                     </span>
                 </label>
                 <div class="col-lg-9">
@@ -299,7 +300,7 @@
                                             <option value="{$carrier.id_reference}">{$carrier.name}</option>
                                         {/foreach}
                                     </select>
-                                    <a href="#" id="addSwap" class="btn btn-default btn-block">Add <i class="icon-arrow-right"></i></a>
+                                    <a href="#" id="addSwap" class="btn btn-default btn-block">{l s='Add' mod='pakettikauppa'} <i class="icon-arrow-right"></i></a>
                                 </div>
 
                                 <div class="col-xs-6">
@@ -308,7 +309,7 @@
                                             <option value="{$selected_carrier.id_carrier}">{$selected_carrier.name}</option>
                                         {/foreach}
                                     </select>
-                                    <a href="#" id="removeSwap" class="btn btn-default btn-block"><i class="icon-arrow-left"></i> Remove</a>
+                                    <a href="#" id="removeSwap" class="btn btn-default btn-block"><i class="icon-arrow-left"></i> {l s='Remove' mod='pakettikauppa'}</a>
                                 </div>
 
                             </div>
@@ -316,7 +317,7 @@
                     </div>
 
                     <p class="help-block">
-                        If no carrier is selected, no carrier will be show on order shipping method. Use CTRL+Click to select more than one carrier.
+                        {l s='If no carrier is selected, no carrier will be show on order shipping method. Use CTRL+Click to select more than one carrier.' mod='pakettikauppa'}
                     </p>
 
                 </div>
@@ -326,7 +327,7 @@
 
         <div class="panel-footer">
             <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaModule" class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
+                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
             </button>
         </div>
 
@@ -406,7 +407,7 @@
         <div class="panel-footer">
             <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaShippingLabels"
                     class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> Save
+                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
             </button>
         </div>
 
