@@ -12,3 +12,5 @@
 - fixed pickup point selection
 - changed Pakettikauppa table structure in database
 - added order id and currency to shipment info
+- moved functions into separate classes and files
+- added a ability to add comment on label
