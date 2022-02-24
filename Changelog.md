@@ -7,10 +7,11 @@
 - fixed the module operation
 - added existing carrier check before carrier create
 - fixed admin tab parent class
-- Adapted to Prestashop 1.7
+- adapted to Prestashop 1.7
 - fixed problems in module configuration page
 - fixed pickup point selection
 - changed Pakettikauppa table structure in database
 - added order id and currency to shipment info
 - moved functions into separate classes and files
 - added a ability to add comment on label
+- all hardcoded texts changed to translatable
