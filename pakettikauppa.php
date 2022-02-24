@@ -241,7 +241,6 @@ class Pakettikauppa extends CarrierModule
             'token' => Tools::getValue('token'),
             'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
             'countries' => Country::getCountries($this->context->language->id),
-            'max_pickup' => 10,
             'label_comment_variables' => array(
                 '{order_id}' => $this->l('Order ID'),
                 '{order_reference}' => $this->l('Order reference'),

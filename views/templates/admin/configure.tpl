@@ -228,7 +228,7 @@
                         {assign var="current_value" value="5"}
                     {/if}
                     <select class="form-control fixed-width-xs" name="pickup_points_count">
-                        {for $i=1 to $max_pickup}
+                        {for $i=1 to 10}
                             <option value="{$i}" {if $current_value == $i}selected{/if}>{$i}</option>
                         {/for}
                     </select>
