@@ -55,12 +55,28 @@ switch (Tools::getValue('action')) {
           ),
         ));
 
+        $current_values = $class_pakettikauppa->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(
+                'point' => 'pickup_point_id',
+                'method' => 'method_code',
+            ),
+            'where' => array(
+                'id_cart' => $cart->id,
+            ),
+        ));
+
         $address = new Address($cart->id_address_delivery);
         $country_iso = Country::getIsoById($address->id_country);
 
-        $result = $client->searchPickupPoints(Tools::getValue('postcode'), null, $country_iso, $selected_method['code'], 5);
+        $pickups_number = Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS');
+        if (empty($pickups_number)) $pickups_number = 5;
+        $result = $client->searchPickupPoints(Tools::getValue('postcode'), null, $country_iso, $selected_method['code'], $pickups_number);
 
-        echo json_encode($result);
+        echo json_encode(array(
+            'pickup_points' => $result,
+            'selected' => $current_values['point'],
+        ));
         break;
 
     case 'selectPickUpPoints':

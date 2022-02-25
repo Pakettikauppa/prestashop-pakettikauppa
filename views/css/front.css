@@ -22,6 +22,50 @@
 *  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  
 */
-#pickuppoints{
+
+.pakettikauppa-extracarrier .form-control.inline {
+  display: inline-block;
+  margin-right: 3px;
+}
+
+.pakettikauppa-extracarrier .pickups_table_holder {
 	line-height: unset;
+  padding-top: 10px;
+  width: 100%;
+}
+
+.pakettikauppa-extracarrier .row-bordered {
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.pakettikauppa-extracarrier .row-bordered.clickable {
+  cursor: pointer;
+}
+
+.pakettikauppa-extracarrier .row-bordered.clickable:hover {
+  background-color: #f6f6f6;
+}
+
+.pakettikauppa-extracarrier .table-pickups {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.pakettikauppa-extracarrier .table-pickups .column-radio {
+  text-align: center;
+  width: 40px;
+}
+
+.pakettikauppa-extracarrier .table-pickups .column-img {
+  width: 100px;
+}
+
+.pakettikauppa-extracarrier .table-pickups .column-desc {
+
+}
+
+.pakettikauppa-extracarrier .table-desc .desc-title {
+  font-weight: bold;
+  color: #333;
 }

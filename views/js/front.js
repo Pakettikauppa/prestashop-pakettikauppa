@@ -24,96 +24,103 @@
 */
 
 $(document).ready(function() {
+  $(document).on("keyup", "#pickup_code", function(e) {
+    if (event.keyCode === 13) {
+      $("#check").click();
+    }
+  });
+
 	$(document).on("change", ".delivery_option_radio", function() {
 		$(".pakettikauppa-extracarrier").hide();
 	});
+
+  $(document).on("click", "#pickuppoints .row-bordered.clickable", function() {
+    this.querySelector('input[name="id_pick_up_point"]').click();
+  });
+
+  //Restore custom added radio functionality
+  $(document).on("change", '#pickuppoints .added_from_template input[name="id_pick_up_point"]', function() {
+    $('#pickuppoints .added_from_template input[name="id_pick_up_point"]').parent().removeClass("checked");
+
+    if (this.checked) {
+      this.parentElement.classList.add("checked");
+    }
+  });
 });
 
-/*
-$(document).ready(function(){
-
-$(document).on('click',$('#check'),function(){
-
-
-
-$.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "searchPickUpPoints",
-                     postcode:$('#pickup_code').val()
-		},
-		success: function(jsonData)
-		{
-
-var html="";
-var data=JSON.parse(jsonData);
-for(var i=0;i<data.length;i++)
-{
-html =html + '<div class="col-md-12 resume table table-bordered" ><div class="col-md-1" style="margin-top:24px" ><input type="radio" name="id_pick_up_point" value="'+data[i]['pickup_point_id']+'" /></div><div class="col-md-2" ><img src="'+data[i]['provider_logo']+'" height="100%" width="100%"/></div><div class="col-md-9"><div class="row"><div class="col-md-12"><font color="black"><b>Name: </b></font>'+data[i]['name']+'</div><div class="col-md-12"><font color="black"><b> Address: </b></font>'+data[i]['street_address']+','+data[i]['city']+','+data[i]['postcode']+','+data[i]['country']+'</div><div class="col-md-12"><font color="black"><b> Description: </b></font>'+data[i]['description']+'</div><div class="col-md-12"><font color="black"><b>Distance: </b></font>'+data[i]['distance']+'</div></div></div></div>';
+function pk_select_pickpup_point(code) {
+  $.ajax({
+    type: 'POST',
+    url: pakettikauppa_ajax,
+    data: {
+      ajax: 1,
+      action: "selectPickUpPoints",
+      code:code,
+      id_cart:$('#id_carts').val(),
+      shipping_method_code:$(".delivery_option_radio input[type='radio']:checked").val()
+    },
+    success: function(jsonData) {
+      //console.log(jsonData);
+    }
+  });
 }
-				$('#pickuppoints').html(html);
-			//console.log(jsonData);
-		}
-	});
 
-
-
-
-
-
-
-});
-
-
-
-$(document).on('click', $("input[name=id_pick_up_point]"), function(el) {
-    //console.log($(el.target).val());
-    $.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "selectPickUpPoints",
-                     code:$(el.target).val(),
-                     id_cart:$('#id_carts').val(),
-                     shipping_method_code:$(".delivery_option_radio input[type='radio']:checked").val()
-		},
-		success: function(jsonData)
-		{
-
-
-		}
-	});
-});
-
-
-
-
-
-
-
-});
-
-
-function select_pickup(id_pickup)
-{
-$.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "selectPickUpPoints",
-                     code:$(this).val(),
-                     id_cart:$('#id_carts')
-
-		},
-		success: function(jsonData)
-		{
-
-
-		}
-	});
+function pk_search_pickup() {
+  $.ajax({
+    type: 'POST',
+    url: pakettikauppa_ajax,
+    data: {
+      ajax: 1,
+      action: "searchPickUpPoints",
+      postcode:$('#pickup_code').val()
+    },
+    success: function(jsonData) {
+      if (jsonData.indexOf("Bad request")!= -1) {
+        var error=jsonData.split(':');
+        $('#pickuppoints').html('<font color="red">Error:'+error[2]+'</font><br>'+$('#pickuppoints').html());
+      } else {
+        var html='<table class="table-pickups">';
+        var data=JSON.parse(jsonData);
+        if (typeof data === 'object') {
+          if ($.isArray(data.pickup_points) && data.pickup_points.length>0) {
+            for (var i=0;i<data.pickup_points.length;i++) {
+              var pickup_data = data.pickup_points[i];
+              var checked = '';
+              if (data.selected == pickup_data['pickup_point_id']) {
+                checked = 'checked';
+              }
+              var replaces = {
+                point_id: pickup_data['pickup_point_id'],
+                logo: pickup_data['provider_logo'],
+                name: pickup_data['name'],
+                description: pickup_data['description'],
+                street: pickup_data['street_address'],
+                city: pickup_data['city'],
+                postcode: pickup_data['postcode'],
+                country: pickup_data['country'],
+                distance: pickup_data['distance'],
+                checked: checked,
+              };
+              html = html + pk_use_template(pickup_template, replaces);
+            }
+            $('#pickuppoints').html(html + "</table>");
+          } else { 
+            $('#pickuppoints').html('No results found');
+          }
+        } else {
+          $('#pickuppoints').html(jsonData);
+        }
+      }
+      
+      //console.log(jsonData);
+    }
+  });
 }
-*/
+
+function pk_use_template(template, replaces) {
+  for (var param in replaces) {
+    template = template.replace('[' + param + ']', replaces[param]);
+  }
+  
+  return template;
+}
