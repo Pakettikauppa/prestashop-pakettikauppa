@@ -16,3 +16,4 @@
 - added a ability to add comment on label
 - all hardcoded texts changed to translatable
 - improved pickup point selection design
+- added loading animation while waiting for pickups list
