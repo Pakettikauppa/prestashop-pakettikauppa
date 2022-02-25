@@ -30,9 +30,10 @@ $(document).ready(function() {
     }
   });
 
-	$(document).on("change", ".delivery_option_radio", function() {
-		$(".pakettikauppa-extracarrier").hide();
-	});
+  $(document).on("change", ".delivery_option_radio", function() {
+    $(".pakettikauppa-extracarrier").show();
+    $(".pakettikauppa-extracarrier").addClass("loading");
+  });
 
   $(document).on("click", "#pickuppoints .row-bordered.clickable", function() {
     this.querySelector('input[name="id_pick_up_point"]').click();

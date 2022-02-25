@@ -34,6 +34,35 @@
   width: 100%;
 }
 
+.pakettikauppa-extracarrier.loading .pickups_table_holder {
+  display: none !important;
+}
+
+.pakettikauppa-extracarrier .loader_holder {
+  margin: 20px 0;
+  text-align: center;
+  display: none;
+}
+
+.pakettikauppa-extracarrier.loading .loader_holder {
+  display: block;
+}
+
+.pakettikauppa-extracarrier .loader {
+  border: 6px solid #f3f3f3; /* Light grey */
+  border-top: 6px solid #27a8de; /* Blue */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: pk_spin 2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes pk_spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .pakettikauppa-extracarrier .row-bordered {
   border: 1px solid #ddd;
   background: #fff;

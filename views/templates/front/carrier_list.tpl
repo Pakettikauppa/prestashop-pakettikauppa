@@ -23,7 +23,7 @@
 *  
 *}
 
-<div class="row box pakettikauppa-extracarrier" style="display:{$display}">
+<div class="row box pakettikauppa-extracarrier {$class_has_pp}" style="display:{$display}">
   
   <div class="col-md-12">
     <p class="carrier_title">{l s='Search Pickup Points' mod='pakettikauppa'}</p>
@@ -35,6 +35,10 @@
     <input type="hidden" id="id_carts" value="{$id_cart}"/>
   </div>
   
+  <div class="col-md-12 loader_holder">
+    <div class="loader"></div>
+  </div>
+
   <div id="pickuppoints" class="col-md-12 pickups_table_holder">
     {if $pick_up_points|@count == 0}
       {l s='There is no any pickup points near your address' mod='pakettikauppa'}
