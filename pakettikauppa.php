@@ -472,6 +472,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $this->context->smarty->assign(array(
+            'class_has_pp' => ($selected_method['has_pp']) ? 'has_pp' : '',
             'pick_up_points' => $pickup_points,
             'selected_point' => $pickup_point_id,
             'ajax_url' => $this->_path . '/ajax.php',

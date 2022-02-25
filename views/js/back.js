@@ -61,4 +61,5 @@ $(document).ready(function() {
     var field = $(field_id);
     field.val(field.val() + $(this).html());
   });
+  
 });
