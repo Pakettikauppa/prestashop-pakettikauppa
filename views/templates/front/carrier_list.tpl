@@ -22,161 +22,94 @@
 *  @license   https://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  
 *}
-<div class="row pakettikauppa-extracarrier" style="display:{$display}">
-   <div class="col-md-12">
-   <p class="carrier_title">{l s='Search Pickup Points' mod='pakettikauppa'}</p>
-   </div>
 
-   <div class="col-md-3">
-        <input type="text"  name="pickup_code" class="form-control ac_input" id="pickup_code" />
-   </div>
+<div class="row box pakettikauppa-extracarrier" style="display:{$display}">
+  
+  <div class="col-md-12">
+    <p class="carrier_title">{l s='Search Pickup Points' mod='pakettikauppa'}</p>
+  </div>
 
-   <div class="col-md-9">
-        <input class="button btn btn-outline " type="button" value="{l s='Search' mod='pakettikauppa'}" id="check" onclick="search_pickup()"/>
-        <input type="hidden" id="id_carts" value="{$id_cart}"/>
+  <div class="col-md-12 form-group pickups_search_holder">
+    <input id="pickup_code" type="text"  name="pickup_code" class="text form-control inline ac_input" value="{$current_postcode}" placeholder="{l s='Postcode' mod='pakettikauppa'}" />
+    <input id="check" class="button btn btn-outline " type="button" value="{l s='Search by postcode' mod='pakettikauppa'}" onclick="pk_search_pickup()"/>
+    <input type="hidden" id="id_carts" value="{$id_cart}"/>
+  </div>
+  
+  <div id="pickuppoints" class="col-md-12 pickups_table_holder">
+    {if $pick_up_points|@count == 0}
+      {l s='There is no any pickup points near your address' mod='pakettikauppa'}
+    {/if}
 
-   </div>
-   <div class="col-md-9" id="pickuppoints" style="padding-top:10px">
-       {if $pick_up_points|@count == 0}
-            {l s='There is no any pickup points near your address' mod='pakettikauppa'}
-       {/if}
-
-     <table>
-        
-        {foreach $pick_up_points as $pick_up_point}
-        
-            <tr>
-                <td><input type="radio" name="id_pick_up_point" value="{$pick_up_point->pickup_point_id}" onclick="selecteds(this.value)"/></td>
-                <td><img src="{$pick_up_point->provider_logo}" height="100%" width="100%"/></td>
+    <table class="table-pickups">
+      {foreach $pick_up_points as $pick_up_point}
+        {assign var="selected" value=false}
+        {if $pick_up_point->pickup_point_id == $selected_point }
+          {assign var="selected" value=true}
+        {/if}
+        <tr class="row-bordered clickable">
+          <td class="column-radio"><input type="radio" name="id_pick_up_point" value="{$pick_up_point->pickup_point_id}" onclick="pk_select_pickpup_point(this.value)" {if $selected === true}checked{/if}/></td>
+          <td class="column-img"><img src="{$pick_up_point->provider_logo}" height="100%" width="100%"/></td>
+          <td class="column-desc">
+            <table class="table-desc">
+              <tr>
                 <td>
-                    <table>
-                        <tr>
-                            <td>
-                                <font color="black"><b>{l s='Name' mod='pakettikauppa'}: </b></font>{$pick_up_point->name}<br>
-                                <font color="black"><b>{l s='Description' mod='pakettikauppa'}: </b></font>{$pick_up_point->description}<br>
-                                <font color="black"><b>{l s='Address' mod='pakettikauppa'}: </b></font>{$pick_up_point->street_address}, {$pick_up_point->city}<br>
-                                <font color="black"><b>{l s='Distance' mod='pakettikauppa'}: </b></font>{$pick_up_point->distance} m.<br>
-                            </td>
-                        </tr>
-                    </table>
+                  <div class="desc-row">
+                    <span class="desc-title">{l s='Name' mod='pakettikauppa'}:</span> {$pick_up_point->name}
+                  </div>
+                  <div class="desc-row">
+                    <span class="desc-title">{l s='Description' mod='pakettikauppa'}:</span> {$pick_up_point->description}
+                  </div>
+                  <div class="desc-row">
+                    <span class="desc-title">{l s='Address' mod='pakettikauppa'}:</span> {$pick_up_point->street_address}, {$pick_up_point->city}
+                  </div>
+                  <div class="desc-row">
+                    <span class="desc-title">{l s='Distance' mod='pakettikauppa'}:</span> {$pick_up_point->distance} m.
+                  </div>
                 </td>
-            </tr>
-        
-        {/foreach}
-</table>
-   </div>
-</div><br>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      {/foreach}
+    </table>
+  </div>
 
-
-
-
-
-
-
-
-
+</div>
 
 <script>
-{ldelim} var module_dir='{$module_dir}'; 
+  var pickup_template = `<tr class="added_from_template row-bordered clickable">
+      <td class="column-radio">
+        <div class="radio"><span class="[checked]"><input type="radio" name="id_pick_up_point" value="[point_id]" onclick="pk_select_pickpup_point(this.value)" [checked]/></span></div>
+      </td>
+      
+      <td class="column-img">
+        <img src="[logo]" height="100%" width="100%"/>
+      </td>
 
-
-function search_pickup()
-{
-	
-   $.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "searchPickUpPoints",
-                     postcode:$('#pickup_code').val()
-		},
-		success: function(jsonData)
-		{
-
-if(jsonData.indexOf("Bad request")!= -1)
-{
-    var error=jsonData.split(':');
-    $('#pickuppoints').html('<font color="red">Error:'+error[2]+'</font><br>'+$('#pickuppoints').html());
-}else{
-var html="<table>";
-var data=JSON.parse(jsonData);
-if($.isArray(data)){
-if(data.length>0){
-for(var i=0;i<data.length;i++)
-{
-    
-html =html + '<tr><td><input type="radio" name="id_pick_up_point" value="'+data[i]['pickup_point_id']+'" onclick="selecteds(this.value)"/></td><td><img src="'+data[i]['provider_logo']+'" height="100%" width="100%"/></td><td><table><tr><td><font color="black"><b>Name: </b></font>'+data[i]['name']+'<br><font color="black"><b> Address: </b></font>'+data[i]['street_address']+','+data[i]['city']+','+data[i]['postcode']+','+data[i]['country']+'</br><font color="black"><b> Description: </b></font>'+data[i]['description']+'</br><font color="black"><b>Distance: </b></font>'+data[i]['distance']+'</td></tr></table></td></tr>';
-
-}
-   
-	$('#pickuppoints').html(html+"</table>");
-	}
-	else{
-	   
-		$('#pickuppoints').html('No results found');
-	}
-
-}
-else{
-    
-	$('#pickuppoints').html(jsonData);
-}
-}
-				//$('#pickuppoints').html(html+"</table>");
-			//console.log(jsonData);
-		}
-	});
-	
-
-	
-	
-}
-
-
-function selecteds(code)
-{
-    $.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "selectPickUpPoints",
-                     code:code,
-                     id_cart:$('#id_carts').val(),
-                     shipping_method_code:$(".delivery_option_radio input[type='radio']:checked").val()
-		},
-		success: function(jsonData)
-		{
-
-
-		}
-	});
-}
-	//selecteds(first_check);
-$("input[name='id_pick_up_point']").on('click', function(el) {
-    //console.log($(el.target).val());
-    $.ajax({
-		type: 'POST',
-		url: module_dir+'/ajax.php',
-		data: {
-		     ajax: 1,
-                     action: "selectPickUpPoints",
-                     code:$(el.target).val(),
-                     id_cart:$('#id_carts').val(),
-                     shipping_method_code:$(".delivery_option_radio input[type='radio']:checked").val()
-		},
-		success: function(jsonData)
-		{
-
-
-		}
-	});
-});
-{rdelim}
-
-
-
-
+      <td class="column-desc">
+        <table class="table-desc">
+          <tr>
+            <td>
+              <div class="desc-row">
+                <span class="desc-title">{l s='Name' mod='pakettikauppa'}:</span> [name]
+              </div>
+              <div class="desc-row">
+                <span class="desc-title">{l s='Description' mod='pakettikauppa'}:</span> [description]
+              </div>
+              <div class="desc-row">
+                <span class="desc-title">{l s='Address' mod='pakettikauppa'}:</span> [street], [city]
+              </div>
+              <div class="desc-row">
+                <span class="desc-title">{l s='Distance' mod='pakettikauppa'}:</span> [distance] m.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
 </script>
 
+<script>
+  var pakettikauppa_ajax='{$ajax_url}';
+</script>

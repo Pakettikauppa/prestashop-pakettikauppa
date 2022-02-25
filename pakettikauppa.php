@@ -409,41 +409,75 @@ class Pakettikauppa extends CarrierModule
 
         if ($selected_method['has_pp']) {
           $display = "block";
-          $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], 5);
+          $pickups_number = Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS');
+          if (empty($pickups_number)) $pickups_number = 5;
+          $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], $pickups_number);
         }
 
-        $this->core->sql->insert_row(array(
+        $current_values = $this->core->sql->get_single_row(array(
             'table' => 'main',
-            'values' => array(
-                'id_cart' => $params['cart']->id,
-                'id_carrier' => $params['cart']->id_carrier,
-                'method_code' => $selected_method['code'],
-            ),
-            'on_duplicate' => array(
-                'id_carrier' => $params['cart']->id_carrier,
-                'method_code' => $selected_method['code'],
-            ),
-        ));
-        
-        $pickup_point_id = 0;
-        if (count($pickup_points) > 0) {
-            $pickup_point_id = $pickup_points[0]->pickup_point_id;
-        }
-        $this->core->sql->update_row(array(
-            'table' => 'main',
-            'update' => array(
-                'pickup_point_id' => $pickup_point_id,
+            'get_values' => array(
+                'point' => 'pickup_point_id',
+                'method' => 'method_code',
             ),
             'where' => array(
                 'id_cart' => $params['cart']->id,
             ),
         ));
 
+        if (!$current_values) {
+            $this->core->sql->insert_row(array(
+                'table' => 'main',
+                'values' => array(
+                    'id_cart' => $params['cart']->id,
+                    'id_carrier' => $params['cart']->id_carrier,
+                    'method_code' => $selected_method['code'],
+                ),
+                'on_duplicate' => array(
+                    'id_carrier' => $params['cart']->id_carrier,
+                    'method_code' => $selected_method['code'],
+                ),
+            ));
+        }
+        
+        $pickup_point_id = 0;
+        if (count($pickup_points) > 0) {
+            if (!empty($current_values['point']) && $current_values['method'] == $selected_method['code']) {
+                $pickup_point_id = $current_values['point'];
+            } else {
+                $pickup_point_id = $pickup_points[0]->pickup_point_id;
+                $this->core->sql->update_row(array(
+                    'table' => 'main',
+                    'update' => array(
+                        'pickup_point_id' => $pickup_point_id,
+                    ),
+                    'where' => array(
+                        'id_cart' => $params['cart']->id,
+                    ),
+                ));
+            }
+        }
+
+        if ($current_values['method'] != $selected_method['code']) {
+            $this->core->sql->update_row(array(
+                'table' => 'main',
+                'update' => array(
+                    'id_carrier' => $params['cart']->id_carrier,
+                    'method_code' => $selected_method['code'],
+                ),
+                'where' => array(
+                    'id_cart' => $params['cart']->id,
+                ),
+            ));
+        }
+
         $this->context->smarty->assign(array(
             'pick_up_points' => $pickup_points,
-            'module_dir' => $this->_path,
+            'selected_point' => $pickup_point_id,
+            'ajax_url' => $this->_path . '/ajax.php',
             'id_cart' => $params['cart']->id,
-            'display' => $display
+            'display' => $display,
+            'current_postcode' => $address->postcode,
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/front/carrier_list.tpl');
         

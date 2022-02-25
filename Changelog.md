@@ -15,3 +15,4 @@
 - moved functions into separate classes and files
 - added a ability to add comment on label
 - all hardcoded texts changed to translatable
+- improved pickup point selection design
