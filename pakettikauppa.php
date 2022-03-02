@@ -228,27 +228,187 @@ class Pakettikauppa extends CarrierModule
             }
         }
 
-        $this->context->smarty->assign('module_dir', $this->_path);
         $warehouses = array(); //TODO: Need to make
         //$warehouses = Warehouse::getWarehouses();
         $selected_carriers = array(); //TODO: Need to make
 
         $this->context->smarty->assign(array(
-            'warehouses' => $warehouses,
-            'selected_carriers' => $selected_carriers,
-            'carriers' => $carriers,
-            'order_statuses' => OrderState::getOrderStates((int)Context::getContext()->language->id),
             'token' => Tools::getValue('token'),
-            'shipping_state' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
-            'countries' => Country::getCountries($this->context->language->id),
-            'label_comment_variables' => array(
-                '{order_id}' => $this->l('Order ID'),
-                '{order_reference}' => $this->l('Order reference'),
-            ),
+            'module_url' => $this->_path,
+            'template_parts_path' => $this->local_path . 'views/templates/admin/parts/configure',
+            'fields' => $this->get_configuration_fields(),
+            'warehouses' => $warehouses, //TODO: For warehouses
+            'selected_carriers' => $selected_carriers, //TODO: For warehouses
+            'carriers' => $carriers, //TODO: For warehouses
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
         return $this->show_msg() . $output;
+    }
+
+    private function get_configuration_fields()
+    {
+        $options_countries = array();
+        $countries_list = Country::getCountries($this->context->language->id);
+        foreach ($countries_list as $country) {
+            $options_countries[$country['iso_code']] = $country['country'];
+        }
+
+        $options_pickups_count = array();
+        for ($i=1; $i<=10; $i++) {
+           $options_pickups_count[$i] = $i; 
+        }
+
+        $options_order_states = array();
+        $order_states = OrderState::getOrderStates($this->context->language->id);
+        foreach ($order_states as $order_state) {
+            $options_order_states[$order_state['id_order_state']] = $order_state['name'];
+        }
+
+        $desc_comment_on_label = $this->l('Available variables') . ':';
+        $label_comment_variables = array(
+            'order_id' => $this->l('Order ID'),
+            'order_reference' => $this->l('Order reference'),
+        );
+        foreach ($label_comment_variables as $var_key => $var_desc) {
+            $desc_comment_on_label .= '<span class="variable_row clickable noselect" data-for="label_comment">';
+            $desc_comment_on_label .= '<code>{' . $var_key . '}</code> - ' . $var_desc;
+            $desc_comment_on_label .= '</span>';
+        }
+
+        $fields = array(
+            'api' => array(
+                array(
+                    'name' => 'api_key',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('API key'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_API_KEY'),
+                ),
+                array(
+                    'name' => 'secret',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('API secret'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_SECRET'),
+                ),
+                array(
+                    'name' => 'modes',
+                    'tpl' => 'select-simple',
+                    'label' => $this->l('Mode'),
+                    'value' => array(
+                        '0' => $this->l('Production mode'),
+                        '1' => $this->l('Test mode'),
+                    ),
+                    'selected' => Configuration::get('PAKETTIKAUPPA_MODE'),
+                    'default' => '1',
+                    'onchange' => "alert('" . $this->l('CAUTION! Mode change will delete all existing Pakettikauppa carriers') . "');",
+                ),
+                array(
+                    'tpl' => 'message',
+                    'value' => $this->l('Saving the settings in this section creates the missing carriers'),
+                ),
+            ),
+            'store' => array(
+                array(
+                    'name' => 'store_name',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Store Name'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_STORE_NAME'),
+                ),
+                array(
+                    'name' => 'address',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Address'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS'),
+                ),
+                array(
+                    'name' => 'postcode',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Post code'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_POSTCODE'),
+                ),
+                array(
+                    'name' => 'city',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('City'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_CITY'),
+                ),
+                array(
+                    'name' => 'country',
+                    'tpl' => 'select-simple',
+                    'label' => $this->l('Country'),
+                    'value' => $options_countries,
+                    'selected' => Configuration::get('PAKETTIKAUPPA_COUNTRY'),
+                ),
+                array(
+                    'name' => 'phone',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Phone'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_PHONE'),
+                ),
+                array(
+                    'name' => 'vat_code',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Vat Code'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_VATCODE'),
+                ),
+            ),
+            'front' => array(
+                array(
+                    'tpl' => 'message',
+                    'value' => $this->l('List of pickup-point providers: activate, shipping price, trigger price, triggered price'),
+                ),
+                array(
+                    'name' => 'pickup_points_count',
+                    'tpl' => 'select-simple',
+                    'label' => $this->l('Number of pickup points'),
+                    'value' => $options_pickups_count,
+                    'selected' => Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS'),
+                    'default' => 5,
+                    'class' => 'fixed-width-xs',
+                    'description' => $this->l('How many pickup points are shown.'),
+                ),
+            ),
+            'labels' => array(
+                array(
+                    'name' => 'shipping_state',
+                    'tpl' => 'select-simple',
+                    'id' => 'order_state',
+                    'label' => $this->l('Automatically generate when state'),
+                    'value' => $options_order_states,
+                    'selected' => Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE'),
+                    'empty_option' => '--- ' . $this->l('Select order state') . ' ---',
+                    'class' => 'fixed-width-xl',
+                    'description' => $this->l('Order state on which you want automatically generate shipment.'),
+                ),
+                array(
+                    'name' => 'label_comment',
+                    'tpl' => 'textarea',
+                    'id' => 'label_comment',
+                    'label' => $this->l('Add comment on labels'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_LABEL_COMMENT'),
+                    'description' => $desc_comment_on_label,
+                ),
+            ),
+        );
+
+        return $this->add_missed_field_parameters($fields);
+    }
+
+    private function add_missed_field_parameters($all_fields)
+    {
+      $required_fields = array(
+        'tpl' => 'not_exists',
+      );
+
+      foreach ($all_fields as $section_name => $section_fields) {
+        foreach ($section_fields as $field_key => $field) {
+          foreach ($required_fields as $req_key => $default_value) {
+            $all_fields[$section_name][$field_key][$req_key] = (isset($field[$req_key])) ? $field[$req_key] : $default_value;
+          }
+        }
+      }
+
+      return $all_fields;
     }
 
     protected function show_msg()

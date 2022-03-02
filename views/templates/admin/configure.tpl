@@ -23,248 +23,27 @@
 *  
 *}
 
-<form id="module_form" class="defaultForm form-horizontal"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
-      method="post" enctype="multipart/form-data" novalidate="">
-    <div class="panel" id="fieldset_0">
+{include file="{$template_parts_path}/section-header.tpl" title="{l s='API settings' mod='pakettikauppa'}" icon="icon-key"}
+    {foreach from=$fields['api'] item=field}
+        {include file="{$template_parts_path}/field-{$field['tpl']}.tpl"}
+    {/foreach}
+{include file="{$template_parts_path}/section-footer.tpl" name="submitPakettikauppaAPI" button="{l s='Save' mod='pakettikauppa'}"}
 
-        <div class="panel-heading">
-            <i class="icon-cogs"></i> {l s='API settings' mod='pakettikauppa'}
-        </div>
+{include file="{$template_parts_path}/section-header.tpl" title="{l s='Sender address' mod='pakettikauppa'}" icon="icon-home"}
+    {foreach from=$fields['store'] item=field}
+        {include file="{$template_parts_path}/field-{$field['tpl']}.tpl"}
+    {/foreach}
+{include file="{$template_parts_path}/section-footer.tpl" name="submitPakettikauppaSender" button="{l s='Save' mod='pakettikauppa'}"}
 
-        <div class="form-wrapper">
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='API key' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="api_key" value="{Configuration::get('PAKETTIKAUPPA_API_KEY')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='API secret' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="secret" value="{Configuration::get('PAKETTIKAUPPA_SECRET')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Mode' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    {assign var="alert_message" value="{l s='CAUTION! Mode change will delete all existing Pakettikauppa carriers' mod='pakettikauppa'}"}
-                    <select name="modes" onchange="alert('{$alert_message}');">
-                        <option value="1" {if Configuration::get('PAKETTIKAUPPA_MODE')==1}selected{/if}>{l s='Test mode' mod='pakettikauppa'}</option>
-                        <option value="0" {if Configuration::get('PAKETTIKAUPPA_MODE')==0}selected{/if}>{l s='Production mode' mod='pakettikauppa'}</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                </label>
-                <div class="col-lg-9">
-                    <div class="form-group">
-                        <div class="col-lg-9">
-                            <div class="form-control-static row">
-                                {l s='Saving the settings in this section creates the missing carriers' mod='pakettikauppa'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- /.form-wrapper -->
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaAPI"
-                class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
-            </button>
-        </div>
-
-    </div>
-</form>
-
-<form id="module_form" class="defaultForm form-horizontal"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
-      method="post" enctype="multipart/form-data" novalidate="">
-    <div class="panel" id="fieldset_0">
-
-        <div class="panel-heading">
-            <i class="icon-cogs"></i> {l s='Sender address' mod='pakettikauppa'}
-        </div>
-
-        <div class="form-wrapper">
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Store Name' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="store_name" value="{Configuration::get('PAKETTIKAUPPA_STORE_NAME')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Address' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="address" value="{Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Post code' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="postcode" value="{Configuration::get('PAKETTIKAUPPA_POSTCODE')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='City' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="city" value="{Configuration::get('PAKETTIKAUPPA_CITY')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Phone' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="phone" value="{Configuration::get('PAKETTIKAUPPA_PHONE')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Country' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <select name="country">
-                        {foreach $countries as $country}
-                            {if Configuration::get('PAKETTIKAUPPA_COUNTRY')== $country.iso_code}
-                                <option value="{$country.iso_code}" selected="true">{$country.country}</option>
-                            {else}
-                                <option value="{$country.iso_code}">{$country.country}</option>
-                            {/if}
-                        {/foreach}
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Vat Code' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-6">
-                    <input type="text" name="vat_code" value="{Configuration::get('PAKETTIKAUPPA_VATCODE')}"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-
-                </label>
-                <div class="col-lg-9">
-                    <div class="form-group">
-                        <div class="col-lg-9">
-                            <div class="form-control-static row">
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- /.form-wrapper -->
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaSender"
-                    class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
-            </button>
-        </div>
-
-    </div>
-</form>
-
-<form id="module_form" class="defaultForm form-horizontal"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
-      method="post" enctype="multipart/form-data" novalidate="">
-    <div class="panel" id="fieldset_0">
-        
-        <div class="panel-heading">
-            <i class="icon-cogs"></i> {l s='Checkout settings' mod='pakettikauppa'}
-        </div>
-
-        <div class="form-wrapper">
-            
-            <div class="form-group">
-                <label class="control-label col-lg-3"></label>
-                <div class="col-lg-9">
-                    <p>{l s='List of pickup-point providers: activate, shipping price, trigger price, triggered price' mod='pakettikauppa'}</p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Number of pickup points' mod='pakettikauppa'}
-                </label>
-
-                <div class="col-lg-6">
-                    {assign var="current_value" value="{Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS')}"}
-                    {if empty($current_value)}
-                        {assign var="current_value" value="5"}
-                    {/if}
-                    <select class="form-control fixed-width-xs" name="pickup_points_count">
-                        {for $i=1 to 10}
-                            <option value="{$i}" {if $current_value == $i}selected{/if}>{$i}</option>
-                        {/for}
-                    </select>
-
-                    <p class="help-block">
-                        {l s='How many pickup points are shown.' mod='pakettikauppa'}
-                    </p>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaFront"
-                    class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
-            </button>
-        </div>
-
-    </div>
-</form>
+{include file="{$template_parts_path}/section-header.tpl" title="{l s='Checkout settings' mod='pakettikauppa'}" icon="icon-shopping-cart"}
+    {foreach from=$fields['front'] item=field}
+        {include file="{$template_parts_path}/field-{$field['tpl']}.tpl"}
+    {/foreach}
+{include file="{$template_parts_path}/section-footer.tpl" name="submitPakettikauppaFront" button="{l s='Save' mod='pakettikauppa'}"}
 
 {if $warehouses}
-<form id="module_form" class="defaultForm form-horizontal" method="post" enctype="multipart/form-data"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}" novalidate="">
-
-    <input name="submitPakettikauppaModule" value="1" type="hidden">
-                
-    <div class="panel" id="fieldset_0">
-
-        <div class="panel-heading">
-            <i class="icon-cogs"></i> {l s='Configure Warehouse & Carrier' mod='pakettikauppa'}
-        </div>
- 
-        <div class="form-wrapper">
+    {include file="{$template_parts_path}/section-header.tpl" title="{l s='Configure Warehouse & Carrier' mod='pakettikauppa'}" icon="icon-archive"}
+        <input name="submitPakettikauppaModule" value="1" type="hidden">
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
@@ -322,98 +101,15 @@
 
                 </div>
             </div>
-
-        </div><!-- /.form-wrapper -->
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaModule" class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
-            </button>
-        </div>
-
-    </div>
-</form>
+    {include file="{$template_parts_path}/section-footer.tpl" name="submitPakettikauppaModule" button="{l s='Save' mod='pakettikauppa'}"}
 {/if}
 
-<form id="module_form" class="defaultForm form-horizontal"
-      action="index.php?controller=AdminModules&amp;configure=pakettikauppa&amp;tab_module=shipping_logistics&amp;module_name=pakettikauppa&amp;token={$token}"
-      method="post" enctype="multipart/form-data" novalidate="">
-    <div class="panel" id="fieldset_0">
-
-        <div class="panel-heading">
-            <i class="icon-cogs"></i> {l s='Labels generation' mod='pakettikauppa'}
-        </div>
-
-        <div class="form-wrapper">
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Automatically generate when state' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-9">
-                    <select name="shipping_state" class=" fixed-width-xl" id="order_state">
-                        <option value="">--- {l s='Select order state' mod='pakettikauppa'} ---</option>
-                        {foreach $order_statuses as $order_statuse}
-                            {if $order_statuse.id_order_state==$shipping_state}
-                                <option value="{$order_statuse.id_order_state}"
-                                        selected="true">{$order_statuse.name}</option>
-                            {else}
-                                <option value="{$order_statuse.id_order_state}">{$order_statuse.name}</option>
-                            {/if}
-                        {/foreach}
-                    </select>
-                    
-                    <p class="help-block">
-                        {l s='Order state on which you want automatically generate shipment.' mod='pakettikauppa'}
-                    </p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Add comment on labels' mod='pakettikauppa'}
-                </label>
-                <div class="col-lg-9">
-                    <textarea id="label_comment" name="label_comment">{Configuration::get('PAKETTIKAUPPA_LABEL_COMMENT')}</textarea>
-
-                    <p class="help-block">
-                        {l s='Available variables' mod='pakettikauppa'}:
-                        {foreach from=$label_comment_variables key=variable item=title}
-                            <span class="variable_row clickable noselect" data-for="label_comment">
-                                <code>{$variable}</code> - {$title}
-                            </span>
-                        {/foreach}
-                    </p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {* EMPTY *}
-                </label>
-                <div class="col-lg-9">
-                    <div class="form-group">
-                        <div class="col-lg-9">
-                            <div class="form-control-static row">
-                                {* EMPTY *}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- /.form-wrapper -->
-
-        <div class="panel-footer">
-            <button type="submit" value="1" id="module_form_submit_btn" name="submitPakettikauppaShippingLabels"
-                    class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='pakettikauppa'}
-            </button>
-        </div>
-
-    </div>
-</form>
+{include file="{$template_parts_path}/section-header.tpl" title="{l s='Labels generation' mod='pakettikauppa'}" icon="icon-file-alt"}
+    {foreach from=$fields['labels'] item=field}
+        {include file="{$template_parts_path}/field-{$field['tpl']}.tpl"}
+    {/foreach}
+{include file="{$template_parts_path}/section-footer.tpl" name="submitPakettikauppaShippingLabels" button="{l s='Save' mod='pakettikauppa'}"}
 
 <script>
-    {ldelim} var module_dir = '{$module_dir}'; {rdelim}
+    {ldelim} var module_dir = '{$module_url}'; {rdelim}
 </script>
