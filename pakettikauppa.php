@@ -154,17 +154,18 @@ class Pakettikauppa extends CarrierModule
      */
     public function getContent()
     {
-        $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0");
         /**
          * If values have been submitted in the form, process.
          */
         if (((bool)Tools::isSubmit('submitPakettikauppaModule')) == true) {
+            $this->update_warehouse_carriers(Tools::getValue('id_warehouse'), Tools::getValue('ids_carriers_selected'));
             $this->postProcess();
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaShippingLabels')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', Tools::getValue('shipping_state'));
             Configuration::updateValue('PAKETTIKAUPPA_LABEL_COMMENT', Tools::getValue('label_comment'));
+            $this->postProcess();
         }
         if (((bool)Tools::isSubmit('submitPakettikauppaSender')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_STORE_NAME', Tools::getValue('store_name'));
@@ -174,10 +175,12 @@ class Pakettikauppa extends CarrierModule
             Configuration::updateValue('PAKETTIKAUPPA_PHONE', Tools::getValue('phone'));
             Configuration::updateValue('PAKETTIKAUPPA_COUNTRY', Tools::getValue('country'));
             Configuration::updateValue('PAKETTIKAUPPA_VATCODE', Tools::getValue('vat_code'));
+            $this->postProcess();
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
+            $this->postProcess();
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
@@ -226,20 +229,16 @@ class Pakettikauppa extends CarrierModule
             } else {
                 $this->context->cookie->__set('success_msg', $this->l('Saved successfully'));
             }
-        }
 
-        $warehouses = array(); //TODO: Need to make
-        //$warehouses = Warehouse::getWarehouses();
-        $selected_carriers = array(); //TODO: Need to make
+            $this->postProcess();
+        }
 
         $this->context->smarty->assign(array(
             'token' => Tools::getValue('token'),
             'module_url' => $this->_path,
             'template_parts_path' => $this->local_path . 'views/templates/admin/parts/configure',
             'fields' => $this->get_configuration_fields(),
-            'warehouses' => $warehouses, //TODO: For warehouses
-            'selected_carriers' => $selected_carriers, //TODO: For warehouses
-            'carriers' => $carriers, //TODO: For warehouses
+            'warehouses' => Configuration::get('PS_ADVANCED_STOCK_MANAGEMENT'),
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
@@ -274,6 +273,18 @@ class Pakettikauppa extends CarrierModule
             $desc_comment_on_label .= '<span class="variable_row clickable noselect" data-for="label_comment">';
             $desc_comment_on_label .= '<code>{' . $var_key . '}</code> - ' . $var_desc;
             $desc_comment_on_label .= '</span>';
+        }
+
+        $options_warehouses = array();
+        $warehouses_list = Warehouse::getWarehouses($this->context->language->id);
+        foreach ($warehouses_list as $warehouse) {
+            $options_warehouses[$warehouse['id_warehouse']] = $warehouse['name'];
+        }
+
+        $options_carriers = array();
+        $available_carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0");
+        foreach ($available_carriers as $carrier) {
+            $options_carriers[$carrier['id_reference']] = $carrier['name'];
         }
 
         $fields = array(
@@ -389,6 +400,40 @@ class Pakettikauppa extends CarrierModule
                     'description' => $desc_comment_on_label,
                 ),
             ),
+            'warehouses' => array(
+                array(
+                    'name' => 'id_warehouse',
+                    'tpl' => 'select-simple',
+                    'id' => 'id_warehouse',
+                    'label' => $this->l('For warehouse'),
+                    'value' => $options_warehouses,
+                    'selected' => '',
+                    'class' => 'fixed-width-xl',
+                    'description' => $this->l('Select Warehouse to assign Pakettikauppa Carriers.'),
+                ),
+                array(
+                    'tpl' => 'select-sides',
+                    'label' => $this->l('Warehouse'),
+                    'label_explain' => $this->l('Associated carriers'),
+                    'side_available' => array(
+                        'name' => 'ids_carriers_available',
+                        'id' => 'availableSwap',
+                        'class' => '',
+                        'btn_id' => 'addSwap',
+                        'btn_txt' => $this->l('Add'),
+                    ),
+                    'side_selected' => array(
+                        'name' => 'ids_carriers_selected',
+                        'id' => 'selectedSwap',
+                        'class' => '',
+                        'btn_id' => 'removeSwap',
+                        'btn_txt' => $this->l('Remove'),
+                    ),
+                    'value' => $options_carriers,
+                    'selected' => array(), // Dont need, because ajax is selecting
+                    'description' => $this->l('If no carrier is selected, no carrier will be show on order shipping method. Use CTRL+Click to select more than one carrier.'),
+                ),
+            ),
         );
 
         return $this->add_missed_field_parameters($fields);
@@ -409,6 +454,51 @@ class Pakettikauppa extends CarrierModule
       }
 
       return $all_fields;
+    }
+
+    private function update_warehouse_carriers($warehouse_id, $selected_carriers)
+    {
+        $count_removed = 0;
+        $count_added = 0;
+
+        $warehouse_values = DB::getInstance()->ExecuteS("SELECT wc.`id_carrier` FROM `" . _DB_PREFIX_ . "warehouse_carrier` wc inner join " . _DB_PREFIX_ . "carrier c on wc.`id_carrier`=c.`id_reference` WHERE wc.`id_warehouse`='" . $warehouse_id . "' AND c.`external_module_name`='pakettikauppa' AND c.`deleted`=0");
+
+        if (!is_array($warehouse_values)) {
+            $warehouse_values = array();
+        }
+
+        if (!is_array($selected_carriers)) {
+            $selected_carriers = array();
+        }
+
+        foreach ($warehouse_values as $key => $value) {
+            $warehouse_values[$key] = $value['id_carrier'];
+            if (!in_array($value['id_carrier'], $selected_carriers)) {
+                $this->core->sql->delete_row(array(
+                    'table' => _DB_PREFIX_ . 'warehouse_carrier',
+                    'where' => array(
+                        'id_carrier' => $value['id_carrier'],
+                        'id_warehouse' => $warehouse_id,
+                    ),
+                ));
+                $count_removed++;
+            }
+        }
+
+        foreach ($selected_carriers as $carrier) {
+            if (!in_array($carrier, $warehouse_values)) {
+                $this->core->sql->insert_row(array(
+                    'table' => _DB_PREFIX_ . 'warehouse_carrier',
+                    'values' => array(
+                        'id_carrier' => $carrier,
+                        'id_warehouse' => $warehouse_id,
+                    ),
+                ));
+                $count_added++;
+            }
+        }
+
+        return array('removed' => $count_removed, 'added' => $count_added);
     }
 
     protected function show_msg()

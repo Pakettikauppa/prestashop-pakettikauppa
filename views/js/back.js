@@ -25,7 +25,7 @@
 
 $(document).ready(function() {
 
-  $('#id_warehouse').on('change',function(){
+  $(document).on('change', '#id_warehouse',function(){
     $.ajax({
       type: 'POST',
       url: module_dir+'/ajax.php',
@@ -55,6 +55,8 @@ $(document).ready(function() {
       }
     });
   });
+
+  $('#id_warehouse').trigger('change');
 
   $(document).on('click', '.help-block .variable_row.clickable code', function() {
     var field_id = '#' + $(this).closest('.variable_row').data('for');

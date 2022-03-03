@@ -18,3 +18,4 @@
 - improved pickup point selection design
 - added loading animation while waiting for pickups list
 - organized configuration page code
+- fixed warehouses control in module configuration page
