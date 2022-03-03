@@ -467,6 +467,10 @@ class Pakettikauppa extends CarrierModule
             $warehouse_values = array();
         }
 
+        if (!is_array($selected_carriers)) {
+            $selected_carriers = array();
+        }
+
         foreach ($warehouse_values as $key => $value) {
             $warehouse_values[$key] = $value['id_carrier'];
             if (!in_array($value['id_carrier'], $selected_carriers)) {
