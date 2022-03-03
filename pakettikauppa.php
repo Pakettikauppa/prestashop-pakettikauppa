@@ -154,85 +154,10 @@ class Pakettikauppa extends CarrierModule
      */
     public function getContent()
     {
-        /**
-         * If values have been submitted in the form, process.
-         */
-        if (((bool)Tools::isSubmit('submitPakettikauppaModule')) == true) {
-            $this->update_warehouse_carriers(Tools::getValue('id_warehouse'), Tools::getValue('ids_carriers_selected'));
-            $this->postProcess();
-        }
+        /* If values have been submitted in the form, process */
+        $this->postProcess();
 
-        if (((bool)Tools::isSubmit('submitPakettikauppaShippingLabels')) == true) {
-            Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', Tools::getValue('shipping_state'));
-            Configuration::updateValue('PAKETTIKAUPPA_LABEL_COMMENT', Tools::getValue('label_comment'));
-            $this->postProcess();
-        }
-        if (((bool)Tools::isSubmit('submitPakettikauppaSender')) == true) {
-            Configuration::updateValue('PAKETTIKAUPPA_STORE_NAME', Tools::getValue('store_name'));
-            Configuration::updateValue('PAKETTIKAUPPA_STORE_ADDRESS', Tools::getValue('address'));
-            Configuration::updateValue('PAKETTIKAUPPA_POSTCODE', Tools::getValue('postcode'));
-            Configuration::updateValue('PAKETTIKAUPPA_CITY', Tools::getValue('city'));
-            Configuration::updateValue('PAKETTIKAUPPA_PHONE', Tools::getValue('phone'));
-            Configuration::updateValue('PAKETTIKAUPPA_COUNTRY', Tools::getValue('country'));
-            Configuration::updateValue('PAKETTIKAUPPA_VATCODE', Tools::getValue('vat_code'));
-            $this->postProcess();
-        }
-
-        if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
-            Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
-            $this->postProcess();
-        }
-
-        if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
-            $old_mode = Configuration::get('PAKETTIKAUPPA_MODE');
-            
-            Configuration::updateValue('PAKETTIKAUPPA_API_KEY', Tools::getValue('api_key'));
-            Configuration::updateValue('PAKETTIKAUPPA_SECRET', Tools::getValue('secret'));
-            Configuration::updateValue('PAKETTIKAUPPA_MODE', Tools::getValue('modes'));
-
-            if ($old_mode != Tools::getValue('modes')) {
-                $this->delete_carriers();
-            }
-
-            $api_configs = array(
-                'test_mode' => (Tools::getValue('modes') == 1),
-                'api_key' => Tools::getValue('api_key'),
-                'secret' => Tools::getValue('secret'),
-            );
-            $client = new \Pakettikauppa\Client($api_configs);
-
-            $shipping_methods = $client->listShippingMethods();
-            $carriers_count = 0;
-            if (is_array($shipping_methods)) {
-                foreach ($shipping_methods as $shipping_method) {
-                    $exists = $this->core->carrier->check_if_association_exist($shipping_method->shipping_method_code);
-                    if (!$exists) {
-                        $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
-                        $this->addZones($carrier);
-                        $this->addGroups($carrier);
-                        $this->addRanges($carrier);
-                        $carriers_count++;
-
-                        $this->core->carrier->associate_method_with_carrier($shipping_method, $carrier->id);
-                    }
-                }
-            } else {
-                $this->context->cookie->__set('error_msg', $this->l('Failed to create carriers due to invalid list received'));
-            }
-
-            if ($carriers_count > 0) {
-                if ($old_mode != Tools::getValue('modes')) {
-                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully, deleted old carriers and created new %s carriers'), $carriers_count));
-                } else {
-                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully and created %s carriers'), $carriers_count));
-                }
-            } else {
-                $this->context->cookie->__set('success_msg', $this->l('Saved successfully'));
-            }
-
-            $this->postProcess();
-        }
-
+        /* Load template */
         $this->context->smarty->assign(array(
             'token' => Tools::getValue('token'),
             'module_url' => $this->_path,
@@ -245,6 +170,9 @@ class Pakettikauppa extends CarrierModule
         return $this->show_msg() . $output;
     }
 
+    /**
+     * Build the configuration fields
+     */
     private function get_configuration_fields()
     {
         $options_countries = array();
@@ -439,6 +367,11 @@ class Pakettikauppa extends CarrierModule
         return $this->add_missed_field_parameters($fields);
     }
 
+    /**
+     * Add required parameters to the configuration fields
+     *
+     * @param (array) $all_fields - builded configuration fields
+     */
     private function add_missed_field_parameters($all_fields)
     {
       $required_fields = array(
@@ -456,6 +389,12 @@ class Pakettikauppa extends CarrierModule
       return $all_fields;
     }
 
+    /**
+     * Edit Pakettikauppa carriers in warehouse
+     *
+     * @param (integer) $warehouse_id - Warehouse ID.
+     * @param (array) $selected_carriers - List of selected carriers for Warehouse
+     */
     private function update_warehouse_carriers($warehouse_id, $selected_carriers)
     {
         $count_removed = 0;
@@ -501,19 +440,22 @@ class Pakettikauppa extends CarrierModule
         return array('removed' => $count_removed, 'added' => $count_added);
     }
 
+    /**
+     * Show PS admin message from cookie
+     */
     protected function show_msg()
     {
         $output = '';
 
         if (isset($this->context->cookie->success_msg)) {
             $msg = $this->context->cookie->success_msg;
-            // delete old messages
+            /* Delete old messages */
             unset($this->context->cookie->success_msg);
             $output .= $this->displayConfirmation($msg);
         }
         if (isset($this->context->cookie->error_msg)) {
             $msg = $this->context->cookie->error_msg;
-            // delete old messages
+            /* Delete old messages */
             unset($this->context->cookie->error_msg);
             $output .= $this->displayError($msg);
         }
@@ -521,16 +463,88 @@ class Pakettikauppa extends CarrierModule
         return $output;
     }
 
-
     /**
-     * Save form data.
+     * Save form data
      */
     protected function postProcess()
     {
-        $this->context->cookie->__set('success_msg', $this->l('Save successfully.'));
-        Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false)
-            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
+        if (((bool)Tools::isSubmit('submitPakettikauppaModule')) == true) {
+            $this->update_warehouse_carriers(Tools::getValue('id_warehouse'), Tools::getValue('ids_carriers_selected'));
+            
+            $this->context->cookie->__set('success_msg', $this->l('Warehouse carriers updated successfully'));
+        }
 
+        if (((bool)Tools::isSubmit('submitPakettikauppaShippingLabels')) == true) {
+            Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', Tools::getValue('shipping_state'));
+            Configuration::updateValue('PAKETTIKAUPPA_LABEL_COMMENT', Tools::getValue('label_comment'));
+            
+            $this->context->cookie->__set('success_msg', $this->l('Labels settings saved successfully'));
+        }
+        if (((bool)Tools::isSubmit('submitPakettikauppaSender')) == true) {
+            Configuration::updateValue('PAKETTIKAUPPA_STORE_NAME', Tools::getValue('store_name'));
+            Configuration::updateValue('PAKETTIKAUPPA_STORE_ADDRESS', Tools::getValue('address'));
+            Configuration::updateValue('PAKETTIKAUPPA_POSTCODE', Tools::getValue('postcode'));
+            Configuration::updateValue('PAKETTIKAUPPA_CITY', Tools::getValue('city'));
+            Configuration::updateValue('PAKETTIKAUPPA_PHONE', Tools::getValue('phone'));
+            Configuration::updateValue('PAKETTIKAUPPA_COUNTRY', Tools::getValue('country'));
+            Configuration::updateValue('PAKETTIKAUPPA_VATCODE', Tools::getValue('vat_code'));
+            
+            $this->context->cookie->__set('success_msg', $this->l('Sender data saved successfully'));
+        }
+
+        if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
+            Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
+
+            $this->context->cookie->__set('success_msg', $this->l('Checkout settings saved successfully'));
+        }
+
+        if (((bool)Tools::isSubmit('submitPakettikauppaAPI')) == true) {
+            $old_mode = Configuration::get('PAKETTIKAUPPA_MODE');
+            
+            Configuration::updateValue('PAKETTIKAUPPA_API_KEY', Tools::getValue('api_key'));
+            Configuration::updateValue('PAKETTIKAUPPA_SECRET', Tools::getValue('secret'));
+            Configuration::updateValue('PAKETTIKAUPPA_MODE', Tools::getValue('modes'));
+
+            if ($old_mode != Tools::getValue('modes')) {
+                $this->delete_carriers();
+            }
+
+            $api_configs = array(
+                'test_mode' => (Tools::getValue('modes') == 1),
+                'api_key' => Tools::getValue('api_key'),
+                'secret' => Tools::getValue('secret'),
+            );
+            $client = new \Pakettikauppa\Client($api_configs);
+
+            $shipping_methods = $client->listShippingMethods();
+            $carriers_count = 0;
+            if (is_array($shipping_methods)) {
+                foreach ($shipping_methods as $shipping_method) {
+                    $exists = $this->core->carrier->check_if_association_exist($shipping_method->shipping_method_code);
+                    if (!$exists) {
+                        $carrier = $this->addCarrier($shipping_method->name, $shipping_method->shipping_method_code);
+                        $this->addZones($carrier);
+                        $this->addGroups($carrier);
+                        $this->addRanges($carrier);
+                        $carriers_count++;
+
+                        $this->core->carrier->associate_method_with_carrier($shipping_method, $carrier->id);
+                    }
+                }
+            } else {
+                $this->context->cookie->__set('error_msg', $this->l('Failed to create carriers due to invalid list received'));
+            }
+
+            if ($carriers_count > 0) {
+                if ($old_mode != Tools::getValue('modes')) {
+                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully, deleted old carriers and created new %s carriers'), $carriers_count));
+                } else {
+                    $this->context->cookie->__set('success_msg', sprintf($this->l('Saved successfully and created %s carriers'), $carriers_count));
+                }
+            } else {
+                $this->context->cookie->__set('success_msg', $this->l('Saved successfully'));
+            }
+        }
     }
 
     public function getOrderShippingCost($params, $shipping_cost)
