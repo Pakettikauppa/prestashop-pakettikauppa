@@ -19,3 +19,4 @@
 - added loading animation while waiting for pickups list
 - organized configuration page code
 - fixed warehouses control in module configuration page
+- added success messages, when saving settings in module configuration page
