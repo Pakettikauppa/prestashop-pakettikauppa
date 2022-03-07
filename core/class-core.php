@@ -16,6 +16,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
     public $sql;
     public $api;
     public $carrier;
+    public $label;
 
     public function __construct($configs = array())
     {    
@@ -26,6 +27,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
       $this->sql = $this->load_sql_class();
       $this->api = $this->load_api_class();
       $this->carrier = $this->load_carrier_class();
+      $this->label = $this->load_label_class();
     }
 
     public static function get_instance() {
@@ -36,6 +38,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
     {
       $default = array(
         'module_dir' => _PS_MODULE_DIR_ . 'pakettikauppa',
+        'translates' => array(),
       );
 
       foreach ($default as $key => $value) {
@@ -68,6 +71,15 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
       require_once($this->configs->module_dir . '/core/class-carrier.php');
 
       $class = new Carrier($this);
+
+      return $class;
+    }
+
+    protected function load_label_class()
+    {
+      require_once($this->configs->module_dir . '/core/class-label.php');
+
+      $class = new Label($this);
 
       return $class;
     }

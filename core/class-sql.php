@@ -44,7 +44,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
       ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21;';
 
       foreach ($sql as $query) {
-        if (\Db::getInstance()->execute($query) == false) {
+        if ($this->exec_query($query) == false) {
           return false;
         }
       }
@@ -57,7 +57,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
       $sql = array();
 
       foreach ($sql as $query) {
-        if (\Db::getInstance()->execute($query) == false) {
+        if ($this->exec_query($query) == false) {
           return false;
         }
       }
@@ -98,7 +98,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
         $sql_query .= $duplicates;
       }
 
-      return \DB::getInstance()->Execute($sql_query);
+      return $this->exec_query($sql_query);
     }
 
     public function update_row($params)
@@ -125,7 +125,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
 
       $sql_query = sprintf('UPDATE %1$s SET %2$s WHERE %3$s', $table, $set_values, $where_values);
 
-      return \DB::getInstance()->Execute($sql_query);
+      return $this->exec_query($sql_query);
     }
 
     public function delete_row($params)
@@ -141,7 +141,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
 
       $sql_query = sprintf('DELETE FROM %1$s WHERE %2$s', $table, $where_values);
 
-      return \DB::getInstance()->Execute($sql_query);
+      return $this->exec_query($sql_query);
     }
 
     public function get_rows($params)
@@ -175,7 +175,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
         $sql_query .= sprintf(' WHERE %3$s', $get_values, $table, $where_values);
       }
 
-      return \DB::getInstance()->ExecuteS($sql_query);
+      return $this->get_by_query($sql_query);
     }
 
     public function get_single_row($params)
@@ -183,6 +183,16 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
       $all_rows = $this->get_rows($params);
 
       return (isset($all_rows[0])) ? $all_rows[0] : false;
+    }
+
+    public function exec_query($sql_query)
+    {
+      return \DB::getInstance()->Execute($sql_query);
+    }
+
+    public function get_by_query($sql_query)
+    {
+      return \DB::getInstance()->ExecuteS($sql_query);
     }
 
     private function get_table_name($key)
