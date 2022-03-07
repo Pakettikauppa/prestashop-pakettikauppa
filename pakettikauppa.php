@@ -83,7 +83,7 @@ class Pakettikauppa extends CarrierModule
         return parent::install() &&
             $this->registerHook('header') &&
             $this->registerHook('backOfficeHeader') &&
-            $this->registerHook('updateCarrier') && $this->registerHook('actionValidateOrder') && $this->registerHook('actionOrderStatusUpdate') && $this->installModuleTab() &&
+            $this->registerHook('updateCarrier') && $this->registerHook('actionValidateOrder') && $this->registerHook('actionOrderStatusPostUpdate') && $this->installModuleTab() &&
             $this->registerHook('displayCarrierList') && $this->registerHook('displayCarrierExtraContent');
     }
 
@@ -747,5 +747,16 @@ class Pakettikauppa extends CarrierModule
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/front/carrier_list.tpl');
         
         return $output;
+    }
+
+    public function hookActionOrderStatusPostUpdate($params)
+    {
+        $check_state = Configuration::get('PAKETTIKAUPPA_SHIPPING_STATE');
+
+        if ($check_state == $params['newOrderStatus']->id) {
+            $shipment = $this->core->label->generate_shipment($params['id_order']);
+            //if ($shipment['status'] === 'success') {}
+            //$this->core->label->generate_PDF($params['id_order']); //Or generate and open PDF
+        }
     }
 }

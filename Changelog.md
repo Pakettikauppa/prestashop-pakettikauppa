@@ -20,3 +20,4 @@
 - organized configuration page code
 - fixed warehouses control in module configuration page
 - added success messages, when saving settings in module configuration page
+- created automatically shipment registration, when changing order status to selected in module configuration
