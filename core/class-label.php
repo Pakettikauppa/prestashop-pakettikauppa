@@ -101,9 +101,12 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       
       if (!$regenerate) {
         $tracking_code = $this->get_tracking_number_from_db($order->id_cart);
-
-        $shipment = $this->get_label_pdf($tracking_code);
-        if (empty($shipment['shipping_label'])) {
+        if (!empty($tracking_code)) {
+          $shipment = $this->get_label_pdf($tracking_code);
+          if (empty($shipment['shipping_label'])) {
+            $regenerate = true;
+          }
+        } else {
           $regenerate = true;
         }
       }
@@ -119,6 +122,8 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       if ($regenerate) {
         $this->save_tracking_number_to_db($order->id_cart, $shipment['tracking_code']);
       }
+
+      $this->set_tracking_number_to_order($id_order, $shipment['tracking_code']);
 
       return $shipment;
     }
@@ -259,6 +264,19 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       ));
 
       return (!empty($result['tracking_number'])) ? $result['tracking_number'] : false;
+    }
+
+    public function set_tracking_number_to_order($id_order, $tracking_number)
+    {
+      $this->core->sql->update_row(array(
+        'table' => _DB_PREFIX_ . 'order_carrier',
+        'update' => array(
+          'tracking_number' => $tracking_number,
+        ),
+        'where' => array(
+          'id_order' => $id_order,
+        ),
+      ));
     }
 
     private function prepare_shipment_params($params)

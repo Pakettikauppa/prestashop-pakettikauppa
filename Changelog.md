@@ -22,3 +22,4 @@
 - added success messages, when saving settings in module configuration page
 - created automatically shipment registration, when changing order status to selected in module configuration
 - created a possibility to print existing label
+- added automatically tracking number saving to PS order
