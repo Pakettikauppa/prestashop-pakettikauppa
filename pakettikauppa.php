@@ -570,7 +570,7 @@ class Pakettikauppa extends CarrierModule
         $carrier->range_behavior = 0;
         $carrier->external_module_name = $this->name;
         $carrier->shipping_method = 2;
-        $carrier->url = 'https://www.pakettikauppa.fi/seuranta/?';
+        $carrier->url = 'https://www.pakettikauppa.fi/seuranta/?@'; //@ - tracking number
 
         foreach (Language::getLanguages() as $lang)
             $carrier->delay[$lang['id_lang']] = $this->l('Super fast delivery');
