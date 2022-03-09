@@ -133,7 +133,7 @@ class AdminPakettikauppaController extends ModuleAdminController
         parent::init();
         $this->bootstrap = true;
 
-        if (Tools::getValue('submitAction') == 'generateShippingSlipPDF') {
+        if (Tools::getValue('submitAction') == 'printShippingSlipPDF' || Tools::getValue('submitAction') == 'regenerateShippingSlipPDF') {
             $id_order = $this->core->sql->get_single_row(array(
                 'table' => _DB_PREFIX_ . 'orders',
                 'get_values' => array('id_order'),
@@ -146,7 +146,11 @@ class AdminPakettikauppaController extends ModuleAdminController
             }
             $id_order = (int)$id_order['id_order'];
 
-            $this->core->label->generate_PDF($id_order);
+            if (Tools::getValue('submitAction') == 'printShippingSlipPDF') {
+                $this->core->label->generate_label_pdf($id_order);
+            } else {
+                $this->core->label->generate_label_pdf($id_order, true);
+            }
 
             die($this->l('Failed to generate label PDF'));
         }
@@ -154,8 +158,9 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function setMedia($isNewTheme = false)
     {
-        parent::setMedia(); // JS files
+        parent::setMedia();
 
+        $this->context->controller->addCss(_MODULE_DIR_ . $this->module->name . '/views/css/back.css', 'all');
         //$this->context->controller->addJS(_PS_MODULE_DIR_ . 'pakettikauppa/views/js/back.js');
     }
 
@@ -189,8 +194,11 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function displayPdfLink($token, $cart_id)
     {
+        $tracking_number = $this->core->label->get_tracking_number_from_db($cart_id);
+        
         $this->context->smarty->assign(array(
             'order' => $cart_id,
+            'have_label' => ($tracking_number) ? true : false,
         ));
 
         return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/_print_pdf_icon_pakettikauppa.tpl');

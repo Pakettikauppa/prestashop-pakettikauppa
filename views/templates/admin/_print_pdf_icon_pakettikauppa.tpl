@@ -28,8 +28,13 @@
 	<span class="btn-group">
 	{* Generate HTML code for printing Delivery Icon with link *}
 	
-		<a class="btn btn-default _blank" title="{l s='Get shipping label' mod='pakettikauppa'}" href="{$link->getAdminLink('AdminPakettikauppa')|escape:'html':'UTF-8'}&amp;submitAction=generateShippingSlipPDF&amp;id_cart={$order}">
-			<i class="icon-file-text"></i> {l s='Label' mod='pakettikauppa'}
+		{if $have_label}
+			<a class="btn btn-default _blank" title="{l s='Regenerate shipping label' mod='pakettikauppa'}" href="{$link->getAdminLink('AdminPakettikauppa')|escape:'html':'UTF-8'}&amp;submitAction=regenerateShippingSlipPDF&amp;id_cart={$order}">
+				<i class="icon-refresh"></i>
+			</a>
+		{/if}
+		<a class="btn btn-default _blank" title="{l s='Get shipping label' mod='pakettikauppa'}" href="{$link->getAdminLink('AdminPakettikauppa')|escape:'html':'UTF-8'}&amp;submitAction=printShippingSlipPDF&amp;id_cart={$order}">
+			<i class="icon-file-text"></i>
 		</a>
 	
 	</span>

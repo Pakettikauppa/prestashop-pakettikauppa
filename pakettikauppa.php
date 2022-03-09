@@ -756,7 +756,7 @@ class Pakettikauppa extends CarrierModule
         if ($check_state == $params['newOrderStatus']->id) {
             $shipment = $this->core->label->generate_shipment($params['id_order']);
             //if ($shipment['status'] === 'success') {}
-            //$this->core->label->generate_PDF($params['id_order']); //Or generate and open PDF
+            //$this->core->label->generate_label_pdf($params['id_order']); //Or generate and open PDF
         }
     }
 }
