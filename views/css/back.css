@@ -49,3 +49,7 @@
 .help-block .variable_row.clickable code:hover {
   background-color: #ddd;
 }
+
+.table.pakettikauppa .btn-group-action a.btn {
+  margin: 0px 0px 0px 3px;
+}
