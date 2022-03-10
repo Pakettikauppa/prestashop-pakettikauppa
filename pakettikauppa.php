@@ -766,7 +766,6 @@ class Pakettikauppa extends CarrierModule
             'id_carrier' => $id_carrier,
             'display' => $display,
             'current_postcode' => $address->postcode,
-            'debug' => $selected_method,
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/' . $template);
         

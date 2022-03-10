@@ -49,7 +49,7 @@ $(document).ready(function() {
   });
 });
 
-function pk_select_pickpup_point(code, ) {
+function pk_select_pickpup_point(code) {
   $.ajax({
     type: 'POST',
     url: pakettikauppa_ajax,
