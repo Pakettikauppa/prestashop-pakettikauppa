@@ -635,8 +635,13 @@ class Pakettikauppa extends CarrierModule
      */
     public function hookHeader()
     {
-        $this->context->controller->addJS($this->_path . '/views/js/front.js');
-        $this->context->controller->addCSS($this->_path . '/views/css/front.css');
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            $this->context->controller->addJS($this->_path . 'views/js/front_17.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/front_17.css');
+        } else {
+            $this->context->controller->addJS($this->_path . 'views/js/front_16.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/front_16.css');
+        }
     }
 
     public function hookDisplayCarrierExtraContent($params)
@@ -648,34 +653,48 @@ class Pakettikauppa extends CarrierModule
     {
         $display = "none";
         $pickup_points = array();
+        $version = '16';
 
         $client = $this->core->api->load_client();
 
+        $id_carrier = $params['cart']->id_carrier;
+        $template = 'front/carrier_list_16.tpl';
+
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            $version = '17';
+            $id_carrier = $params['carrier']['id'];
+            $template = 'front/carrier_list_17.tpl';
+        }
+
         $address = new Address($params['cart']->id_address_delivery);
         $country_iso = Country::getIsoById($address->id_country);
-        $carrier = new Carrier($params['cart']->id_carrier);
+        $carrier = new Carrier($id_carrier);
 
         $ship_detail = $this->core->sql->get_rows(array(
-          'table' => 'methods',
-          'get_values' => array(
-            'code' => 'method_code',
-            'has_pp' => 'has_pp',
-          ),
-          'where' => array(
-            'id_carrier_reference' => $carrier->id_reference,
-          ),
+            'table' => 'methods',
+            'get_values' => array(
+                'code' => 'method_code',
+                'has_pp' => 'has_pp',
+            ),
+            'where' => array(
+                'id_carrier_reference' => $carrier->id_reference,
+            ),
         ));
         $selected_method = (isset($ship_detail[0])) ? $ship_detail[0] : false;
 
+        if ($country_iso != 'FI') { //TODO: Temporary error avoid
+            return;
+        }
+
         if ($selected_method === false) {
-          return;
+            return;
         }
 
         if ($selected_method['has_pp']) {
-          $display = "block";
-          $pickups_number = Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS');
-          if (empty($pickups_number)) $pickups_number = 5;
-          $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], $pickups_number);
+            $display = "block";
+            $pickups_number = Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS');
+            if (empty($pickups_number)) $pickups_number = 5;
+            $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], $pickups_number);
         }
 
         $current_values = $this->core->sql->get_single_row(array(
@@ -694,39 +713,41 @@ class Pakettikauppa extends CarrierModule
                 'table' => 'main',
                 'values' => array(
                     'id_cart' => $params['cart']->id,
-                    'id_carrier' => $params['cart']->id_carrier,
+                    'id_carrier' => $id_carrier,
                     'method_code' => $selected_method['code'],
                 ),
                 'on_duplicate' => array(
-                    'id_carrier' => $params['cart']->id_carrier,
+                    'id_carrier' => $id_carrier,
                     'method_code' => $selected_method['code'],
                 ),
             ));
         }
-        
+       
         $pickup_point_id = 0;
         if (count($pickup_points) > 0) {
             if (!empty($current_values['point']) && $current_values['method'] == $selected_method['code']) {
                 $pickup_point_id = $current_values['point'];
             } else {
                 $pickup_point_id = $pickup_points[0]->pickup_point_id;
-                $this->core->sql->update_row(array(
-                    'table' => 'main',
-                    'update' => array(
-                        'pickup_point_id' => $pickup_point_id,
-                    ),
-                    'where' => array(
-                        'id_cart' => $params['cart']->id,
-                    ),
-                ));
+                if ($version == '16') {
+                    $this->core->sql->update_row(array(
+                        'table' => 'main',
+                        'update' => array(
+                            'pickup_point_id' => $pickup_point_id,
+                        ),
+                        'where' => array(
+                            'id_cart' => $params['cart']->id,
+                        ),
+                    ));
+                }
             }
         }
 
-        if ($current_values['method'] != $selected_method['code']) {
+        if ($current_values['method'] != $selected_method['code'] && $version == '16') {
             $this->core->sql->update_row(array(
                 'table' => 'main',
                 'update' => array(
-                    'id_carrier' => $params['cart']->id_carrier,
+                    'id_carrier' => $id_carrier,
                     'method_code' => $selected_method['code'],
                 ),
                 'where' => array(
@@ -738,13 +759,16 @@ class Pakettikauppa extends CarrierModule
         $this->context->smarty->assign(array(
             'class_has_pp' => ($selected_method['has_pp']) ? 'has_pp' : '',
             'pick_up_points' => $pickup_points,
+            'selected_method' => $selected_method['code'],
             'selected_point' => $pickup_point_id,
-            'ajax_url' => $this->_path . '/ajax.php',
+            'ajax_url' => $this->_path . 'ajax.php',
             'id_cart' => $params['cart']->id,
+            'id_carrier' => $id_carrier,
             'display' => $display,
             'current_postcode' => $address->postcode,
+            'debug' => $selected_method,
         ));
-        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/front/carrier_list.tpl');
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/' . $template);
         
         return $output;
     }

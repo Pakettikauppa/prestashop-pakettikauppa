@@ -24,41 +24,43 @@
 */
 
 $(document).ready(function() {
-  $(document).on("keyup", "#pickup_code", function(e) {
-    if (event.keyCode === 13) {
-      $("#check").click();
+  $(document).on("keyup", ".pakettikauppa-extracarrier input[name='pickup_code']", function(e) {
+    if (e.keyCode === 13 || e.which === 13) {
+      e.preventDefault();
+      var carrier_id = $(this).closest(".pakettikauppa-extracarrier").data("carrier");
+      $("#check_" + carrier_id).click();
+      return false;
     }
   });
 
-  $(document).on("change", ".delivery_option_radio", function() {
-    $(".pakettikauppa-extracarrier").show();
-    $(".pakettikauppa-extracarrier").addClass("loading");
+  $(document).on("change", "input[name*='delivery_option[']", function() {
+    var carrier_id = this.value.replace(/\D/g, "");
+    var points = $("#pickuppoints_" + carrier_id + " input[name='id_pick_up_point']");
+    if (points.length > 0) {
+      points[0].checked = true;
+      $(points[0]).trigger("click");
+    } else {
+      pk_select_pickpup_point(0);
+    }
   });
 
-  $(document).on("click", "#pickuppoints .row-bordered.clickable", function() {
+  $(document).on("click", ".pakettikauppa-extracarrier .pickups_table_holder .row-bordered.clickable", function() {
     this.querySelector('input[name="id_pick_up_point"]').click();
-  });
-
-  //Restore custom added radio functionality
-  $(document).on("change", '#pickuppoints .added_from_template input[name="id_pick_up_point"]', function() {
-    $('#pickuppoints .added_from_template input[name="id_pick_up_point"]').parent().removeClass("checked");
-
-    if (this.checked) {
-      this.parentElement.classList.add("checked");
-    }
   });
 });
 
-function pk_select_pickpup_point(code) {
+function pk_select_pickpup_point(pickup_id) {
+  var carrier_id = $("input[name*='delivery_option[']:checked").val().replace(/\D/g, "");
   $.ajax({
     type: 'POST',
     url: pakettikauppa_ajax,
     data: {
       ajax: 1,
       action: "selectPickUpPoints",
-      code:code,
-      id_cart:$('#id_carts').val(),
-      shipping_method_code:$(".delivery_option_radio input[type='radio']:checked").val()
+      id_pickup: pickup_id,
+      id_cart: $('#id_carts_' + carrier_id).val(),
+      id_carrier: carrier_id,
+      method_code: $('#method_code_' + carrier_id).val(),
     },
     success: function(jsonData) {
       //console.log(jsonData);
@@ -66,22 +68,23 @@ function pk_select_pickpup_point(code) {
   });
 }
 
-function pk_search_pickup() {
+function pk_search_pickup(id_carrier) {
   $.ajax({
     type: 'POST',
     url: pakettikauppa_ajax,
     data: {
       ajax: 1,
       action: "searchPickUpPoints",
-      postcode:$('#pickup_code').val()
+      postcode:$('#pickup_code_' + id_carrier).val()
     },
     success: function(jsonData) {
+      var container = $('#pickuppoints_' + id_carrier);
       if (jsonData.indexOf("Bad request")!= -1) {
-        var error=jsonData.split(':');
-        $('#pickuppoints').html('<font color="red">Error:'+error[2]+'</font><br>'+$('#pickuppoints').html());
+        var error = jsonData.split(':');
+        $(container).html('<font color="red">Error:' + error[2] + '</font><br>' + $('#pickuppoints_' + id_carrier).html());
       } else {
-        var html='<table class="table-pickups">';
-        var data=JSON.parse(jsonData);
+        var html = '<table class="table-pickups">';
+        var data = JSON.parse(jsonData);
         if (typeof data === 'object') {
           if ($.isArray(data.pickup_points) && data.pickup_points.length>0) {
             for (var i=0;i<data.pickup_points.length;i++) {
@@ -102,14 +105,14 @@ function pk_search_pickup() {
                 distance: pickup_data['distance'],
                 checked: checked,
               };
-              html = html + pk_use_template(pickup_template, replaces);
+              html = html + pk_use_template(window['pickup_template_' + id_carrier], replaces);
             }
-            $('#pickuppoints').html(html + "</table>");
+            $(container).html(html + "</table>");
           } else { 
-            $('#pickuppoints').html('No results found');
+            $(container).html('No results found');
           }
         } else {
-          $('#pickuppoints').html(jsonData);
+          $(container).html(jsonData);
         }
       }
       
