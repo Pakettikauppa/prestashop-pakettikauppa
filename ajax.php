@@ -81,21 +81,31 @@ switch (Tools::getValue('action')) {
         break;
 
     case 'selectPickUpPoints':
-        $result = $class_pakettikauppa->sql->insert_row(array(
-            'table' => 'main',
-            'values' => array(
-                'id_cart' => Tools::getValue('id_cart'),
-                'pickup_point_id' => Tools::getValue('code'),
-                'id_carrier' => rtrim(Tools::getValue('shipping_method_code')),
+        $check_method = $class_pakettikauppa->sql->get_single_row(array(
+            'table' => 'methods',
+            'where' => array(
+                'method_code' => Tools::getValue('method_code'),
             ),
-            'on_duplicate' => array(
-                'pickup_point_id' => Tools::getValue('code'),
-                'id_carrier' => preg_replace('/[^0-9]/', '', Tools::getValue('shipping_method_code')),
-            ),
-        )); 
+        ));
+        if (!empty($check_method)) {
+            $result = $class_pakettikauppa->sql->insert_row(array(
+                'table' => 'main',
+                'values' => array(
+                    'id_cart' => Tools::getValue('id_cart'),
+                    'pickup_point_id' => Tools::getValue('id_pickup'),
+                    'id_carrier' => rtrim(Tools::getValue('id_carrier')),
+                    'method_code' => Tools::getValue('method_code'),
+                ),
+                'on_duplicate' => array(
+                    'pickup_point_id' => Tools::getValue('id_pickup'),
+                    'id_carrier' => preg_replace('/[^0-9]/', '', Tools::getValue('id_carrier')),
+                    'method_code' => Tools::getValue('method_code'),
+                ),
+            )); 
 
-        if ($result) {
-            echo true;
+            if ($result) {
+                echo true;
+            }
         }
         break;
 }
