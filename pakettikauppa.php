@@ -682,10 +682,6 @@ class Pakettikauppa extends CarrierModule
         ));
         $selected_method = (isset($ship_detail[0])) ? $ship_detail[0] : false;
 
-        if ($country_iso != 'FI') { //TODO: Temporary error avoid
-            return;
-        }
-
         if ($selected_method === false) {
             return;
         }
@@ -695,6 +691,7 @@ class Pakettikauppa extends CarrierModule
             $pickups_number = Configuration::get('PAKETTIKAUPPA_MAX_PICKUPS');
             if (empty($pickups_number)) $pickups_number = 5;
             $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $selected_method['code'], $pickups_number);
+            if (empty($pickup_points)) $pickup_points = array();
         }
 
         $current_values = $this->core->sql->get_single_row(array(
