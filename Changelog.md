@@ -24,3 +24,4 @@
 - created a possibility to print existing label
 - added automatically tracking number saving to PS order
 - fixed error when pickup point service is not available in the selected country
+- fixed compatibility with other shipping modules

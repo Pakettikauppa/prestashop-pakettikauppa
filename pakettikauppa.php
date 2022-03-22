@@ -55,7 +55,12 @@ class Pakettikauppa extends CarrierModule
 
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
-        $this->core = new PS_Pakettikauppa();
+        $this->core = new PS_Pakettikauppa(array(
+          'translates' => array(
+            'error_order_object' => $this->l('Cant load Order object'),
+            'error_ship_not_found' => $this->l('Shipment information not found'),
+          ),
+        ));
     }
 
     /**
