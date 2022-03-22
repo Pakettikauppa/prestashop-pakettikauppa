@@ -50,6 +50,7 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->core = new PS_Pakettikauppa(array(
           'translates' => array(
             'error_order_object' => $this->l('Cant load Order object'),
+            'error_ship_not_found' => $this->l('Shipment information not found'),
             'error_required_postcode' => $this->l('Sender postcode is required'),
             'error_failed_get_tracking' => $this->l('Failed get tracking code'),
             'error_tracking_empty' => $this->l('Empty tracking code value'),

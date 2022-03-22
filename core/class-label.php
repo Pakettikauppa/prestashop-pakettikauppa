@@ -25,6 +25,22 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         return array('status' => 'error', 'msg' => $this->trans['error_order_object']);
       }
 
+      $ship_detail = $this->core->sql->get_single_row(array(
+        'table' => 'main',
+        'get_values' => array(
+          'point' => 'pickup_point_id',
+          'method' => 'method_code',
+          'carrier' => 'id_carrier',
+        ),
+        'where' => array(
+          'id_cart' => $order->id_cart,
+        ),
+      ));
+
+      if (empty($ship_detail)) {
+        return array('status' => 'error', 'msg' => $this->trans['error_ship_not_found']);
+      }
+
       $order_invoice_collection = $order->getInvoicesCollection();
 
       if (empty(\Configuration::get('PAKETTIKAUPPA_POSTCODE'))) {
@@ -41,18 +57,6 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         ),
       ))['iso_code'];
       $currency = new \CurrencyCore($order->id_currency);
-
-      $ship_detail = $this->core->sql->get_single_row(array(
-        'table' => 'main',
-        'get_values' => array(
-          'point' => 'pickup_point_id',
-          'method' => 'method_code',
-          'carrier' => 'id_carrier',
-        ),
-        'where' => array(
-          'id_cart' => $order->id_cart,
-        ),
-      ));
 
       $additional_services = array();
       if (!empty($ship_detail['point'])) {
