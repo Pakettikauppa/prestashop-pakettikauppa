@@ -25,3 +25,4 @@
 - added automatically tracking number saving to PS order
 - fixed error when pickup point service is not available in the selected country
 - fixed compatibility with other shipping modules
+- fixed responsive design in checkout page
