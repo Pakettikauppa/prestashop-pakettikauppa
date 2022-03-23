@@ -191,6 +191,11 @@ class Pakettikauppa extends CarrierModule
            $options_pickups_count[$i] = $i; 
         }
 
+        $options_cod_modules = array();
+        foreach (PaymentModule::getInstalledPaymentModules() as $module) {
+            $options_cod_modules[$module['id_module']] = $module['name'];
+        }
+
         $options_order_states = array();
         $order_states = OrderState::getOrderStates($this->context->language->id);
         foreach ($order_states as $order_state) {
@@ -227,12 +232,14 @@ class Pakettikauppa extends CarrierModule
                     'tpl' => 'text-simple',
                     'label' => $this->l('API key'),
                     'value' => Configuration::get('PAKETTIKAUPPA_API_KEY'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'secret',
                     'tpl' => 'text-simple',
                     'label' => $this->l('API secret'),
                     'value' => Configuration::get('PAKETTIKAUPPA_SECRET'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'modes',
@@ -245,6 +252,7 @@ class Pakettikauppa extends CarrierModule
                     'selected' => Configuration::get('PAKETTIKAUPPA_MODE'),
                     'default' => '1',
                     'onchange' => "alert('" . $this->l('CAUTION! Mode change will delete all existing Pakettikauppa carriers') . "');",
+                    'required' => true,
                 ),
                 array(
                     'tpl' => 'message',
@@ -257,24 +265,28 @@ class Pakettikauppa extends CarrierModule
                     'tpl' => 'text-simple',
                     'label' => $this->l('Store Name'),
                     'value' => Configuration::get('PAKETTIKAUPPA_STORE_NAME'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'address',
                     'tpl' => 'text-simple',
                     'label' => $this->l('Address'),
                     'value' => Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'postcode',
                     'tpl' => 'text-simple',
                     'label' => $this->l('Post code'),
                     'value' => Configuration::get('PAKETTIKAUPPA_POSTCODE'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'city',
                     'tpl' => 'text-simple',
                     'label' => $this->l('City'),
                     'value' => Configuration::get('PAKETTIKAUPPA_CITY'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'country',
@@ -282,18 +294,42 @@ class Pakettikauppa extends CarrierModule
                     'label' => $this->l('Country'),
                     'value' => $options_countries,
                     'selected' => Configuration::get('PAKETTIKAUPPA_COUNTRY'),
+                    'required' => true,
                 ),
                 array(
                     'name' => 'phone',
                     'tpl' => 'text-simple',
                     'label' => $this->l('Phone'),
                     'value' => Configuration::get('PAKETTIKAUPPA_PHONE'),
+                    'required' => true,
+                    'description' => $this->l('Phone number in international format.'),
                 ),
                 array(
                     'name' => 'vat_code',
                     'tpl' => 'text-simple',
-                    'label' => $this->l('Vat Code'),
+                    'label' => $this->l('VAT code'),
                     'value' => Configuration::get('PAKETTIKAUPPA_VATCODE'),
+                ),
+                array(
+                    'name' => 'bank_account',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Bank account number'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_BANK_ACCOUNT'),
+                    'description' => $this->l('Bank account number in IBAN format.') . ' ' . $this->l('Required if want use "Cash on Delivery" service.'),
+                ),
+                array(
+                    'name' => 'bank_bic',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Bank BIC code'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_BANK_BIC'),
+                    'description' => $this->l('BIC (Bank Identifier Code) of the named bank (also known as SWIFT code).') . ' ' . $this->l('Required if want use "Cash on Delivery" service.'),
+                ),
+                array(
+                    'name' => 'bank_reference',
+                    'tpl' => 'text-simple',
+                    'label' => $this->l('Bank reference'),
+                    'value' => Configuration::get('PAKETTIKAUPPA_BANK_REFERENCE'),
+                    'description' => $this->l('Required if want use "Cash on Delivery" service.'),
                 ),
             ),
             'front' => array(
@@ -310,6 +346,14 @@ class Pakettikauppa extends CarrierModule
                     'default' => 5,
                     'class' => 'fixed-width-xs',
                     'description' => $this->l('How many pickup points are shown.'),
+                ),
+                array(
+                    'name' => 'cod_modules',
+                    'tpl' => 'select-checkbox',
+                    'label' => $this->l('C.O.D. modules'),
+                    'value' => $options_cod_modules,
+                    'selected' => unserialize(Configuration::get('PAKETTIKAUPPA_COD_MODULES')),
+                    'description' => $this->l('Select payment modules for which need use "Cash on Delivery" service.'),
                 ),
             ),
             'labels' => array(
@@ -493,12 +537,16 @@ class Pakettikauppa extends CarrierModule
             Configuration::updateValue('PAKETTIKAUPPA_PHONE', Tools::getValue('phone'));
             Configuration::updateValue('PAKETTIKAUPPA_COUNTRY', Tools::getValue('country'));
             Configuration::updateValue('PAKETTIKAUPPA_VATCODE', Tools::getValue('vat_code'));
+            Configuration::updateValue('PAKETTIKAUPPA_BANK_ACCOUNT', Tools::getValue('bank_account'));
+            Configuration::updateValue('PAKETTIKAUPPA_BANK_BIC', Tools::getValue('bank_bic'));
+            Configuration::updateValue('PAKETTIKAUPPA_BANK_REFERENCE', Tools::getValue('bank_reference'));
             
             $this->context->cookie->__set('success_msg', $this->l('Sender data saved successfully'));
         }
 
         if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
+            Configuration::updateValue('PAKETTIKAUPPA_COD_MODULES', serialize(Tools::getValue('cod_modules')));
 
             $this->context->cookie->__set('success_msg', $this->l('Checkout settings saved successfully'));
         }

@@ -1,5 +1,7 @@
 <div class="form-group">
-    <label class="control-label col-lg-3">{$field['label']}</label>
+    <label class="control-label col-lg-3 {if isset($field['required']) && $field['required'] === true}required{/if}">
+        {$field['label']}
+    </label>
     <div class="col-lg-6">
         <select name="{$field['name']}"
             {if isset($field['id'])}id="{$field['id']}"{/if}

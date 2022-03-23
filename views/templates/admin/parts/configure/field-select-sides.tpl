@@ -1,5 +1,5 @@
 <div class="form-group">
-    <label class="control-label col-lg-3">
+    <label class="control-label col-lg-3 {if isset($field['required']) && $field['required'] === true}required{/if}">
         {if isset($field['label_explain'])}
             <span class="label-tooltip" data-toggle="tooltip" data-html="true" title="" data-original-title="{$field['label_explain']}">
                 {$field['label']}

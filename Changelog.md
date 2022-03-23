@@ -26,3 +26,4 @@
 - fixed error when pickup point service is not available in the selected country
 - fixed compatibility with other shipping modules
 - fixed responsive design in checkout page
+- added "Cash on Delivery" service support
