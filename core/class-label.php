@@ -58,11 +58,15 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       ))['iso_code'];
       $currency = new \CurrencyCore($order->id_currency);
 
+      /*** START Additional services ***/
       $additional_services = array();
+      
+      /* 2106 - Pickup points */
       if (!empty($ship_detail['point'])) {
         $additional_services['2106']['pickup_point_id'] = $ship_detail['point'];
       }
 
+      /* 3101 - COD */
       $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
       if (!empty($cod_modules)) {
         foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
@@ -83,6 +87,33 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
           }
         }
       }
+
+      /* 3102 - Multiple shipments */
+      $total_shipments = 1; //TODO: Make to work
+      if ($total_shipments > 1) {
+        $additional_services['3102']['count'] = $total_shipments;
+      }
+      
+      /* 3104 - Fragile */
+      $fragile = false; //TODO: Make to work
+      if ($fragile) {
+        $additional_services['3104'] = array();
+      }
+
+      /* 3139 - Arrival notification */ //TODO: Not working
+      /*if (!empty($address->phone)) {
+        $additional_services['3139']['telephone'] = $address->phone;
+      }
+      if (!empty($customer_data->email)) {
+        $additional_services['3139']['email'] = $customer_data->email;
+      }*/
+      
+      /* 3174 - Oversized (Large) */
+      $oversized = false; //TODO: Make to work
+      if ($oversized) {
+        $additional_services['3174'] = array();
+      }
+      /*** END Additional services ***/
       
       $total_weight = $this->core->sql->get_by_query('SELECT o.reference,sum(od.product_weight) as weight FROM `' . _DB_PREFIX_ . 'order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $id_order);
       
@@ -141,6 +172,9 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }
 
       if (empty($shipment['tracking_code'])) {
+        if (!empty($shipment['status']) && $shipment['status'] === 'error') {
+          return $shipment;
+        }
         return array('status' => 'error', 'msg' => $this->trans['error_tracking_empty']);
       }
 
@@ -172,6 +206,10 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         } catch (Exception $ex) {
           die($ex->getMessage());
         }
+      }
+
+      if (!empty($shipment['status']) && $shipment['status'] === 'error' && !empty($shipment['msg'])) {
+        die($shipment['msg']);
       }
 
       die($this->trans['error_label_pdf_empty']);
@@ -207,14 +245,6 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $info->setReference($params['info']['reference']);
       $info->setCurrency($params['info']['currency']);
 
-      $additional_service = new \Pakettikauppa\Shipment\AdditionalService();
-      foreach ($params['additional_services'] as $service_key => $service_params) {
-        $additional_service->setServiceCode($service_key);
-        foreach ($service_params as $service_param_key => $service_value) {
-          $additional_service->addSpecifier($service_param_key, $service_value);
-        }
-      }
-
       $parcel = new \Pakettikauppa\Shipment\Parcel();
       $parcel->setReference($params['parcel']['reference']);
       $parcel->setWeight($params['parcel']['weight']);
@@ -226,7 +256,15 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $shipment->setReceiver($receiver);
       $shipment->setShipmentInfo($info);
       $shipment->addParcel($parcel);
-      $shipment->addAdditionalService($additional_service);
+      
+      foreach ($params['additional_services'] as $service_key => $service_params) {
+        $additional_service = new \Pakettikauppa\Shipment\AdditionalService();
+        $additional_service->setServiceCode($service_key);
+        foreach ($service_params as $service_param_key => $service_value) {
+          $additional_service->addSpecifier($service_param_key, $service_value);
+        }
+        $shipment->addAdditionalService($additional_service);
+      }
 
       try {
         if ($client->createTrackingCode($shipment)) {

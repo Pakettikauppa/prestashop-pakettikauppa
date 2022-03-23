@@ -55,6 +55,7 @@ class AdminPakettikauppaController extends ModuleAdminController
             'error_failed_get_tracking' => $this->l('Failed get tracking code'),
             'error_tracking_empty' => $this->l('Empty tracking code value'),
             'error_label_pdf_empty' => $this->l('Not received label PDF'),
+            'error_from_api' => $this->l('Got error from Pakettikauppa server'),
           ),
         ));
 

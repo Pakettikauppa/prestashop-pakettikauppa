@@ -27,3 +27,4 @@
 - fixed compatibility with other shipping modules
 - fixed responsive design in checkout page
 - added "Cash on Delivery" service support
+- fixed the using of multiple additional services
