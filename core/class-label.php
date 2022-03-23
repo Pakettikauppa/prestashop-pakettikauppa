@@ -62,6 +62,27 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       if (!empty($ship_detail['point'])) {
         $additional_services['2106']['pickup_point_id'] = $ship_detail['point'];
       }
+
+      $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
+      if (!empty($cod_modules)) {
+        foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
+          if (in_array($module['id_module'], $cod_modules)) {
+            if ($module['name'] === $order->module) {
+              $bank_account_number = \Configuration::get('PAKETTIKAUPPA_BANK_ACCOUNT');
+              if (!empty($bank_account_number)) {
+                $bank_account_number = chunk_split(str_replace(' ', '', $bank_account_number), 4, ' '); //Remove spaces and add space after every 4th character
+              }
+              $additional_services['3101'] = array(
+                'amount' => \Tools::ps_round($order->getOrdersTotalPaid(), 2),
+                'account' => $bank_account_number,
+                'reference' => \Configuration::get('PAKETTIKAUPPA_BANK_REFERENCE'),
+                'codbic' => \Configuration::get('PAKETTIKAUPPA_BANK_BIC'),
+              );
+              break;
+            }
+          }
+        }
+      }
       
       $total_weight = $this->core->sql->get_by_query('SELECT o.reference,sum(od.product_weight) as weight FROM `' . _DB_PREFIX_ . 'order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $id_order);
       

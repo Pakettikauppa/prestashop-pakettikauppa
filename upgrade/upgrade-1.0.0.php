@@ -29,11 +29,11 @@ if (!defined('_PS_VERSION_')) {
 }
 
 /**
- * This function updates your module from previous versions to the version 1.1,
+ * This function updates your module from previous versions to the version 1.0.0,
  * usefull when you modify your database, or register a new hook ...
  * Don't forget to create one file per version.
  */
-function upgrade_module_1_1_0($module)
+function upgrade_module_1_0_0($module)
 {
     /**
      * Do everything you want right there,
