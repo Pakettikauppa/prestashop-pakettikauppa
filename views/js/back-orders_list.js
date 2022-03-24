@@ -18,11 +18,7 @@ function pk_save_additional_services(order_id) {
       selected_services: selected_services
     },
     success: function (jsonData) {
-      // something magical
-      if (isJson(jsonData)) {
-        var data = JSON.parse(jsonData);
-        console.log(data);
-      } else {
+      if (!isJson(jsonData)) {
         alert(jsonData);
       }
     }
