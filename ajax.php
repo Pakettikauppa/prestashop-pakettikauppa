@@ -108,4 +108,26 @@ switch (Tools::getValue('action')) {
             }
         }
         break;
+    case 'saveAddtionalService':
+        if (empty(Tools::getValue('id_cart'))) {
+            die('Cart ID not received');
+        }
+
+        $selected_services = Tools::getValue('selected_services');
+
+        $result = $class_pakettikauppa->sql->update_row(array(
+            'table' => 'main',
+            'update' => array(
+                'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
+            ),
+            'where' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+            ),
+        ));
+        if ($result) {
+            echo true;
+        }
+        break;
+    default:
+        echo 'Action not exists';
 }

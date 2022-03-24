@@ -64,7 +64,8 @@ class AdminPakettikauppaController extends ModuleAdminController
             ROUND(o.total_paid,2) as total,
             a.track_number as id_track,
             a.id_cart as pickup_point,
-            a.id_carrier as id_carrier";
+            a.id_carrier as id_carrier,
+            a.id_cart as services";
         $this->_join = 'inner join ' . _DB_PREFIX_ . 'orders o on a.id_cart= o.id_cart inner join ' . _DB_PREFIX_ . 'customer c on o.id_customer=c.id_customer';
         $this->_orderBy = 'id_order';
         $this->_orderWay = 'DESC';
@@ -120,6 +121,16 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'align' => 'center',
                 'havingFilter' => true
             ),
+            'services' => array(
+                'title' => $this->l('Use services'),
+                'width' => 'auto',
+                'type' => 'text',
+                'callback' => 'additionalServices',
+                'search' => false,
+                'align' => 'center',
+                'havingFilter' => false,
+                'orderby' => false,
+            ),
         );
     }
 
@@ -162,8 +173,11 @@ class AdminPakettikauppaController extends ModuleAdminController
     {
         parent::setMedia();
 
+        Media::addJsDef(array(
+            'pakettikauppa_ajax' => _MODULE_DIR_ . $this->module->name . '/ajax.php',                       
+        ));
         $this->context->controller->addCss(_MODULE_DIR_ . $this->module->name . '/views/css/back.css', 'all');
-        //$this->context->controller->addJS(_PS_MODULE_DIR_ . 'pakettikauppa/views/js/back.js');
+        $this->context->controller->addJS(_MODULE_DIR_ . $this->module->name . '/views/js/back-orders_list.js');
     }
 
     public function getCarrierName($id_carrier, $tr)
@@ -203,6 +217,36 @@ class AdminPakettikauppaController extends ModuleAdminController
             'have_label' => ($tracking_number) ? true : false,
         ));
 
-        return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/_print_pdf_icon_pakettikauppa.tpl');
+        return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/table-print_pdf.tpl');
+    }
+
+    public function additionalServices($cart_id, $row_data)
+    {
+        $additional_services = array(
+            'fragile' => $this->l('Fragile'),
+            'oversized' => $this->l('Oversized'),
+        );
+
+        $sql_selected_services = $this->core->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array('additional_services'),
+            'where' => array(
+                'id_cart' => $cart_id,
+            ),
+        ));
+        $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
+        if (empty($selected_services)) { //If unserialize return false
+            $selected_services = array();
+        }
+
+        $this->context->smarty->assign(array(
+            'order_id' => (isset($row_data['id_order'])) ? $row_data['id_order'] : $cart_id,
+            'cart_id' => $cart_id,
+            'row_data' => $row_data,
+            'additional_services' => $additional_services,
+            'selected_services' => $selected_services,
+        ));
+
+        return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/table-additional_services.tpl');
     }
 }

@@ -677,7 +677,7 @@ class Pakettikauppa extends CarrierModule
     {
         if (Tools::getValue('module_name') == $this->name) {
             $this->context->controller->addJquery();
-            $this->context->controller->addJS($this->_path . 'views/js/back.js');
+            $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
             
             $this->context->controller->addCSS($this->_path . 'views/css/back.css');
         }
