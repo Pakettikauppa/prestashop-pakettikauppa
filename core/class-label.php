@@ -31,6 +31,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
           'point' => 'pickup_point_id',
           'method' => 'method_code',
           'carrier' => 'id_carrier',
+          'services' => 'additional_services',
         ),
         'where' => array(
           'id_cart' => $order->id_cart,
@@ -60,7 +61,12 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
 
       /*** START Additional services ***/
       $additional_services = array();
-      
+
+      $selected_services = (!empty($ship_detail['services'])) ? unserialize($ship_detail['services']) : array();
+      if (empty($selected_services)) { //If unserialize return false
+        $selected_services = array();
+      }
+
       /* 2106 - Pickup points */
       if (!empty($ship_detail['point'])) {
         $additional_services['2106']['pickup_point_id'] = $ship_detail['point'];
@@ -95,8 +101,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }
       
       /* 3104 - Fragile */
-      $fragile = false; //TODO: Make to work
-      if ($fragile) {
+      if (in_array('fragile', $selected_services)) {
         $additional_services['3104'] = array();
       }
 
@@ -109,8 +114,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }*/
       
       /* 3174 - Oversized (Large) */
-      $oversized = false; //TODO: Make to work
-      if ($oversized) {
+      if (in_array('oversized', $selected_services)) {
         $additional_services['3174'] = array();
       }
       /*** END Additional services ***/

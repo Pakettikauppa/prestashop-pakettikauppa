@@ -29,6 +29,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
         `method_code` int(10) NOT NULL COMMENT "Pakettikauppa method code",
         `pickup_point_id` int(11) NOT NULL COMMENT "Pakettikauppa pickup point id",
         `track_number` varchar(50) NOT NULL COMMENT "Shipment tracking number",
+        `additional_services` text NOT NULL COMMENT "Additional services for this shipment",
         PRIMARY KEY (`id`),
         UNIQUE (`id_cart`)
       ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21;';

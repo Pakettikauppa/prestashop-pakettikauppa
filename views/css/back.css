@@ -53,3 +53,21 @@
 .table.pakettikauppa .btn-group-action a.btn {
   margin: 0px 0px 0px 3px;
 }
+.table.pakettikauppa .table.additional_services {
+  margin: 0;
+}
+.table.pakettikauppa .table.additional_services td {
+  padding: 0;
+  border: none;
+  text-align: left;
+  background: #fff;
+}
+.table.pakettikauppa .table.additional_services label {
+  margin: 0;
+  font-weight: normal;
+  display: block;
+}
+.table.pakettikauppa .table.additional_services input[type="checkbox"],
+.table.pakettikauppa .table.additional_services label {
+  cursor: pointer;
+}

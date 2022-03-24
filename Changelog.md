@@ -28,3 +28,4 @@
 - fixed responsive design in checkout page
 - added "Cash on Delivery" service support
 - fixed the using of multiple additional services
+- added "Fragile" and "Oversized" services support
