@@ -40,7 +40,7 @@ $(document).ready(function() {
       points[0].checked = true;
       $(points[0]).trigger("click");
     } else {
-      pk_select_pickpup_point(0);
+      pk_select_pickup_point(0);
     }
   });
 
@@ -49,7 +49,7 @@ $(document).ready(function() {
   });
 });
 
-function pk_select_pickpup_point(pickup_id) {
+function pk_select_pickup_point(pickup_id) {
   var carrier_id = $("input[name*='delivery_option[']:checked").val().replace(/\D/g, "");
   $.ajax({
     type: 'POST',
@@ -83,33 +83,20 @@ function pk_search_pickup(id_carrier) {
         var error = jsonData.split(':');
         $(container).html('<font color="red">Error:' + error[2] + '</font><br>' + $('#pickuppoints_' + id_carrier).html());
       } else {
-        var html = '<table class="table-pickups">';
         var data = JSON.parse(jsonData);
         if (typeof data === 'object') {
+          var pickup_points = [];
           if ($.isArray(data.pickup_points) && data.pickup_points.length>0) {
-            for (var i=0;i<data.pickup_points.length;i++) {
-              var pickup_data = data.pickup_points[i];
-              var checked = '';
-              if (data.selected == pickup_data['pickup_point_id']) {
-                checked = 'checked';
-              }
-              var replaces = {
-                point_id: pickup_data['pickup_point_id'],
-                logo: pickup_data['provider_logo'],
-                name: pickup_data['name'],
-                description: pickup_data['description'],
-                street: pickup_data['street_address'],
-                city: pickup_data['city'],
-                postcode: pickup_data['postcode'],
-                country: pickup_data['country'],
-                distance: pickup_data['distance'],
-                checked: checked,
-              };
-              html = html + pk_use_template(window['pickup_template_' + id_carrier], replaces);
+            pickup_points = data.pickup_points;
+          }
+          if (pk_template_style === 'dropdown') {
+            pk_update_dropdown(id_carrier, pickup_points);
+          } else {
+            if (pickup_points.length>0) {
+              $(container).html(pk_get_list_table(data, id_carrier));
+            } else { 
+              $(container).html(pk_empty_list);
             }
-            $(container).html(html + "</table>");
-          } else { 
-            $(container).html('No results found');
           }
         } else {
           $(container).html(jsonData);
@@ -121,10 +108,65 @@ function pk_search_pickup(id_carrier) {
   });
 }
 
+function pk_get_list_table(data, id_carrier) {
+  var html = '<table class="table-pickups">';
+  for (var i=0;i<data.pickup_points.length;i++) {
+    var pickup_data = data.pickup_points[i];
+    var checked = '';
+    if (data.selected == pickup_data['pickup_point_id']) {
+      checked = 'checked';
+    }
+    var replaces = {
+      point_id: pickup_data['pickup_point_id'],
+      logo: pickup_data['provider_logo'],
+      name: pickup_data['name'],
+      description: pickup_data['description'],
+      street: pickup_data['street_address'],
+      city: pickup_data['city'],
+      postcode: pickup_data['postcode'],
+      country: pickup_data['country'],
+      distance: pickup_data['distance'],
+      checked: checked,
+    };
+    html = html + pk_use_template(window['pickup_template_' + id_carrier], replaces);
+  }
+  return html + "</table>";
+}
+
 function pk_use_template(template, replaces) {
   for (var param in replaces) {
     template = template.replace('[' + param + ']', replaces[param]);
   }
   
   return template;
+}
+
+function pk_update_dropdown(id_carrier, pickup_points) {
+  var dropdown = document.getElementById("list-" + id_carrier);
+  pk_remove_options(dropdown);
+  console.log(pickup_points);
+  if (!pickup_points.length) {
+    var option = document.createElement('option');
+    option.value = "";
+    option.innerHTML = pk_empty_list;
+    dropdown.appendChild(option);
+  } else {
+    for (var i=0; i<pickup_points.length; i++) {
+      var option = document.createElement('option');
+      option.value = pickup_points[i].pickup_point_id;
+      option.innerHTML = pickup_points[i].name;
+      option.dataset.name = pickup_points[i].name;
+      option.dataset.address = pickup_points[i].street_address + ", " + pickup_points[i].city;
+      option.dataset.distance = pickup_points[i].distance + " m.";
+      dropdown.appendChild(option);
+    }
+  }
+  pk_build_dropdown("list-" + id_carrier); //Required dropdown.js file
+}
+
+function pk_remove_options(select_element) {
+   var i, L = select_element.options.length - 1;
+   for(i = L; i >= 0; i--) {
+      select_element.remove(i);
+   }
 }

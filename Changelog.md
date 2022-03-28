@@ -29,3 +29,4 @@
 - added "Cash on Delivery" service support
 - fixed the using of multiple additional services
 - added "Fragile" and "Oversized" services support
+- added a option to choose pickup points list style

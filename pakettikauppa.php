@@ -348,6 +348,19 @@ class Pakettikauppa extends CarrierModule
                     'description' => $this->l('How many pickup points are shown.'),
                 ),
                 array(
+                    'name' => 'pickup_list_style',
+                    'tpl' => 'select-simple',
+                    'label' => $this->l('Pickup point selection style'),
+                    'value' => array(
+                        'radio' => $this->l('Radio buttons'),
+                        'dropdown' => $this->l('Dropdown menu'),
+                    ),
+                    'selected' => Configuration::get('PAKETTIKAUPPA_LIST_STYLE'),
+                    'default' => 'radio',
+                    'class' => 'fixed-width-xl',
+                    'description' => $this->l('How to display a list of pick-up points.'),
+                ),
+                array(
                     'name' => 'cod_modules',
                     'tpl' => 'select-checkbox',
                     'label' => $this->l('C.O.D. modules'),
@@ -546,6 +559,7 @@ class Pakettikauppa extends CarrierModule
 
         if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
+            Configuration::updateValue('PAKETTIKAUPPA_LIST_STYLE', Tools::getValue('pickup_list_style'));
             Configuration::updateValue('PAKETTIKAUPPA_COD_MODULES', serialize(Tools::getValue('cod_modules')));
 
             $this->context->cookie->__set('success_msg', $this->l('Checkout settings saved successfully'));
@@ -688,6 +702,9 @@ class Pakettikauppa extends CarrierModule
      */
     public function hookHeader()
     {
+        $this->context->controller->addJS($this->_path . 'views/js/dropdown.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/dropdown.css');
+
         if (version_compare(_PS_VERSION_, '1.7', '>=')) {
             $this->context->controller->addJS($this->_path . 'views/js/front_17.js');
             $this->context->controller->addCSS($this->_path . 'views/css/front_17.css');
@@ -718,6 +735,10 @@ class Pakettikauppa extends CarrierModule
             $id_carrier = $params['carrier']['id'];
             $template = 'front/carrier_list_17.tpl';
         }
+
+        $pickup_list_style = Configuration::get('PAKETTIKAUPPA_LIST_STYLE');
+        if (empty($pickup_list_style)) $pickup_list_style = 'radio';
+        $template = str_replace('.tpl', '_' . $pickup_list_style . '.tpl', $template);
 
         $address = new Address($params['cart']->id_address_delivery);
         $country_iso = Country::getIsoById($address->id_country);
@@ -816,6 +837,7 @@ class Pakettikauppa extends CarrierModule
             'id_carrier' => $id_carrier,
             'display' => $display,
             'current_postcode' => $address->postcode,
+            'search_img' => $this->_path . 'views/img/icon-search.png',
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/' . $template);
         
