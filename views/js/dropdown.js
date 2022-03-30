@@ -62,12 +62,20 @@ function pk_build_dropdown(dropdown_id) {
       }
       option.dataset.value = org_dropdown.options[i].value;
 
-      for (var j=0; j<params_names.length; j++) {
+      if (org_dropdown.options[i].value === "") {
         var span = document.createElement("span");
-        span.classList.add("option-" + params_names[j]);
-        span.innerHTML = org_dropdown.options[i].getAttribute("data-" + params_names[j]);
-
+        span.classList.add("option-name");
+        span.innerHTML = org_dropdown.options[i].text;
         option.appendChild(span);
+        option.classList.add("empty");
+      } else {
+        for (var j=0; j<params_names.length; j++) {
+          var span = document.createElement("span");
+          span.classList.add("option-" + params_names[j]);
+          span.innerHTML = org_dropdown.options[i].getAttribute("data-" + params_names[j]);
+
+          option.appendChild(span);
+        }
       }
 
       list.appendChild(option);

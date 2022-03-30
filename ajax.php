@@ -87,17 +87,18 @@ switch (Tools::getValue('action')) {
                 'method_code' => Tools::getValue('method_code'),
             ),
         ));
+        $selected_pickup_point = (Tools::getValue('id_pickup') !== "") ? Tools::getValue('id_pickup') : 0;
         if (!empty($check_method)) {
             $result = $class_pakettikauppa->sql->insert_row(array(
                 'table' => 'main',
                 'values' => array(
                     'id_cart' => Tools::getValue('id_cart'),
-                    'pickup_point_id' => Tools::getValue('id_pickup'),
+                    'pickup_point_id' => $selected_pickup_point,
                     'id_carrier' => rtrim(Tools::getValue('id_carrier')),
                     'method_code' => Tools::getValue('method_code'),
                 ),
                 'on_duplicate' => array(
-                    'pickup_point_id' => Tools::getValue('id_pickup'),
+                    'pickup_point_id' => $selected_pickup_point,
                     'id_carrier' => preg_replace('/[^0-9]/', '', Tools::getValue('id_carrier')),
                     'method_code' => Tools::getValue('method_code'),
                 ),

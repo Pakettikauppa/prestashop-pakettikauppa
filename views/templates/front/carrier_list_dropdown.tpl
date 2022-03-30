@@ -23,7 +23,7 @@
 *  
 *}
 
-<div class="row box pakettikauppa-extracarrier ps17 carrier-{$id_carrier} {$class_has_pp}" style="display:{$display}" data-carrier="{$id_carrier}">
+<div class="row box pakettikauppa-extracarrier ps{$version} style-dropdown carrier-{$id_carrier} {$class_has_pp}" style="display:{$display}" data-carrier="{$id_carrier}">
 
   <div class="col-md-12 pickups_search_holder">
     <input id="pickup_code_{$id_carrier}" type="text"  name="pickup_code" class="text form-control inline ac_input" value="{$current_postcode}" placeholder="{l s='Postcode' mod='pakettikauppa'}" />
@@ -42,9 +42,10 @@
       {l s='There is no any pickup points near your address' mod='pakettikauppa'}
     {else}
       <select id="list-{$id_carrier}" class="pk_dropdown" onchange="pk_select_pickup_point(this.value)" data-params="name,address,distance">
+        <option value="" {if !$selected_point}selected{/if}>-- {l s='Please select pickup point' mod='pakettikauppa'} --</option>
         {foreach $pick_up_points as $pick_up_point}
           {assign var="selected" value=false}
-          {if $pick_up_point->pickup_point_id == $selected_point }
+          {if $pick_up_point->pickup_point_id == $selected_point}
             {assign var="selected" value=true}
           {/if}
           <option value="{$pick_up_point->pickup_point_id}" {if $selected === true}selected{/if} data-name="{$pick_up_point->name}" data-address="{$pick_up_point->street_address}, {$pick_up_point->city}" data-distance="{$pick_up_point->distance} m.">{$pick_up_point->name}</option>
@@ -57,9 +58,10 @@
 
 <script>
   var pk_template_style = "dropdown";
-  var pk_empty_list = "{l s='No results found' mod='pakettikauppa'}";
-</script>
 
-<script>
-  var pakettikauppa_ajax = '{$ajax_url}';
+  {if $version === '16'}
+    $(document).ready(function() {
+      pk_change_dropdowns();
+    });
+  {/if}
 </script>

@@ -26,6 +26,7 @@
 .pakettikauppa-extracarrier .form-control.inline {
   display: inline-block;
   margin-right: 3px;
+  width: auto;
 }
 
 .pakettikauppa-extracarrier .pickups_table_holder {
@@ -56,6 +57,15 @@
   height: 40px;
   animation: pk_spin 2s linear infinite;
   display: inline-block;
+}
+
+.pakettikauppa-extracarrier.style-dropdown .loader_holder {
+  margin: 12px 0 2px;
+}
+.pakettikauppa-extracarrier.style-dropdown .loader {
+  width: 24px;
+  height: 24px;
+  border-width: 4px;
 }
 
 @keyframes pk_spin {
@@ -97,4 +107,46 @@
 .pakettikauppa-extracarrier .table-desc .desc-title {
   font-weight: bold;
   color: #333;
+}
+
+.pakettikauppa-extracarrier .pk_dropdown_view .option-name {
+  display: block;
+  line-height: 100%;
+}
+.pakettikauppa-extracarrier .pk_dropdown_view .option-address {
+  font-size: 1rem;
+  opacity: 0.5;
+}
+.pakettikauppa-extracarrier .pk_dropdown_view .option-distance {
+  font-size: 1rem;
+  opacity: 0.5;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+/*******************************************************
+ *                    RESPONSIVE
+ *******************************************************/
+@media only screen and (max-width: 768px) {
+  .pakettikauppa-extracarrier .table-pickups .column-img {
+    display: none;
+  }
+}
+@media only screen and (max-width: 500px) {
+  .pakettikauppa-extracarrier .form-control.inline {
+    width: 100%;
+    margin: 0 0 10px;
+  }
+  .pakettikauppa-extracarrier .pickups_search_holder .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .pakettikauppa-extracarrier .table-desc {
+    font-size: 1.2rem;
+  }
+  .pakettikauppa-extracarrier .pk_dropdown_view .option-distance {
+    top: unset;
+    bottom: 0;
+  }
 }
