@@ -23,13 +23,13 @@
 *  
 *}
 
-<div class="row box pakettikauppa-extracarrier ps17 carrier-{$id_carrier} {$class_has_pp}" style="display:{$display}" data-carrier="{$id_carrier}">
-  
-  <div class="col-md-12">
+<div class="row box pakettikauppa-extracarrier ps{$version} style-radio carrier-{$id_carrier} {$class_has_pp}" style="display:{$display}" data-carrier="{$id_carrier}">
+
+  <div class="col-md-12 title_holder">
     <p class="carrier_title">{l s='Search Pickup Points' mod='pakettikauppa'}</p>
   </div>
 
-  <div class="col-md-12 form-group pickups_search_holder">
+  <div class="col-md-12 pickups_search_holder">
     <input id="pickup_code_{$id_carrier}" type="text"  name="pickup_code" class="text form-control inline ac_input" value="{$current_postcode}" placeholder="{l s='Postcode' mod='pakettikauppa'}" />
     <input id="check_{$id_carrier}" class="button btn btn-outline " type="button" value="{l s='Search by postcode' mod='pakettikauppa'}" onclick="pk_search_pickup({$id_carrier})"/>
     <input type="hidden" id="id_carts_{$id_carrier}" value="{$id_cart}"/>
@@ -41,7 +41,7 @@
 
   <input type="hidden" id="method_code_{$id_carrier}" name="pk_method_code" value="{$selected_method}"/>
   
-  <div id="pickuppoints_{$id_carrier}" class="col-md-12 pickups_table_holder">
+  <div id="pickuppoints_{$id_carrier}" class="col-md-12 pickups_table_holder pickups_style-radio">
     {if $pick_up_points|@count == 0}
       {l s='There is no any pickup points near your address' mod='pakettikauppa'}
     {/if}
@@ -53,7 +53,7 @@
           {assign var="selected" value=true}
         {/if}
         <tr class="row-bordered clickable">
-          <td class="column-radio"><input type="radio" name="id_pick_up_point" value="{$pick_up_point->pickup_point_id}" onclick="pk_select_pickpup_point(this.value)" {if $selected === true}checked{/if}/></td>
+          <td class="column-radio"><input type="radio" class="pickup_point" name="id_pick_up_point_{$id_carrier}" value="{$pick_up_point->pickup_point_id}" onclick="pk_select_pickup_point(this.value)" {if $selected === true}checked{/if}/></td>
           <td class="column-img"><img src="{$pick_up_point->provider_logo}" height="100%" width="100%"/></td>
           <td class="column-desc">
             <table class="table-desc">
@@ -83,9 +83,10 @@
 </div>
 
 <script>
+  var pk_template_style = "radio";
   var pickup_template_{$id_carrier} = `<tr class="added_from_template row-bordered clickable">
       <td class="column-radio">
-        <div class="radio"><span class="[checked]"><input type="radio" name="id_pick_up_point" value="[point_id]" onclick="pk_select_pickpup_point(this.value)" [checked]/></span></div>
+        <div class="radio"><span class="[checked]"><input type="radio" class="pickup_point" name="id_pick_up_point_{$id_carrier}" value="[point_id]" onclick="pk_select_pickup_point(this.value)" [checked]/></span></div>
       </td>
       
       <td class="column-img">
@@ -114,8 +115,4 @@
       </td>
     </tr>
   `;
-</script>
-
-<script>
-  var pakettikauppa_ajax = '{$ajax_url}';
 </script>

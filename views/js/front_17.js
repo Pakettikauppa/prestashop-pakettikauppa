@@ -35,96 +35,52 @@ $(document).ready(function() {
 
   $(document).on("change", "input[name*='delivery_option[']", function() {
     var carrier_id = this.value.replace(/\D/g, "");
-    var points = $("#pickuppoints_" + carrier_id + " input[name='id_pick_up_point']");
-    if (points.length > 0) {
-      points[0].checked = true;
-      $(points[0]).trigger("click");
+    var points_radio = $("#pickuppoints_" + carrier_id + " input.pickup_point");
+    var dropdown = $("#pickuppoints_" + carrier_id + " select.pk_dropdown");
+
+    if (points_radio.length > 0) {
+      if (pakettikauppa_params.autoselect == 1) {
+        points_radio[0].checked = true;
+        $(points_radio[0]).trigger("click");
+      }
+    } else if (dropdown.length) {
+      if (pakettikauppa_params.autoselect == 1) {
+        for (var i=0; i<dropdown[0].options.length; i++) {
+          if (dropdown[0].options[i].value) {
+            dropdown[0].value = dropdown[0].options[i].value;
+            break;
+          }
+        }
+      } else if (dropdown[0].value === "") {
+        pk_select_pickup_point(0);
+      }
+      $(dropdown).trigger("change");
     } else {
-      pk_select_pickpup_point(0);
+      pk_select_pickup_point(0);
     }
   });
 
   $(document).on("click", ".pakettikauppa-extracarrier .pickups_table_holder .row-bordered.clickable", function() {
-    this.querySelector('input[name="id_pick_up_point"]').click();
+    this.querySelector('input.pickup_point').click();
+  });
+
+  $(document).on("submit", "form#js-delivery", function() {
+    var carrier_id = $("input[name*='delivery_option[']:checked").val().replace(/\D/g, "");
+    
+    if ($("#pickuppoints_" + carrier_id + " .pk_dropdown").length > 0) {
+      if (!$("#pickuppoints_" + carrier_id + " .pk_dropdown").val() || $("#pickuppoints_" + carrier_id + " .pk_dropdown").val() === "") {
+        alert(pakettikauppa_text.submit_error);
+        return false;
+      }
+    }
+
+    if ($("#pickuppoints_" + carrier_id + " input.pickup_point").length > 0) {
+      if (!$("#pickuppoints_" + carrier_id + " input.pickup_point").is(':checked')) {
+        alert(pakettikauppa_text.submit_error);
+        return false;
+      }
+    }
+
+    return true;
   });
 });
-
-function pk_select_pickpup_point(pickup_id) {
-  var carrier_id = $("input[name*='delivery_option[']:checked").val().replace(/\D/g, "");
-  $.ajax({
-    type: 'POST',
-    url: pakettikauppa_ajax,
-    data: {
-      ajax: 1,
-      action: "selectPickUpPoints",
-      id_pickup: pickup_id,
-      id_cart: $('#id_carts_' + carrier_id).val(),
-      id_carrier: carrier_id,
-      method_code: $('#method_code_' + carrier_id).val(),
-    },
-    success: function(jsonData) {
-      //console.log(jsonData);
-    }
-  });
-}
-
-function pk_search_pickup(id_carrier) {
-  $.ajax({
-    type: 'POST',
-    url: pakettikauppa_ajax,
-    data: {
-      ajax: 1,
-      action: "searchPickUpPoints",
-      postcode:$('#pickup_code_' + id_carrier).val()
-    },
-    success: function(jsonData) {
-      var container = $('#pickuppoints_' + id_carrier);
-      if (jsonData.indexOf("Bad request")!= -1) {
-        var error = jsonData.split(':');
-        $(container).html('<font color="red">Error:' + error[2] + '</font><br>' + $('#pickuppoints_' + id_carrier).html());
-      } else {
-        var html = '<table class="table-pickups">';
-        var data = JSON.parse(jsonData);
-        if (typeof data === 'object') {
-          if ($.isArray(data.pickup_points) && data.pickup_points.length>0) {
-            for (var i=0;i<data.pickup_points.length;i++) {
-              var pickup_data = data.pickup_points[i];
-              var checked = '';
-              if (data.selected == pickup_data['pickup_point_id']) {
-                checked = 'checked';
-              }
-              var replaces = {
-                point_id: pickup_data['pickup_point_id'],
-                logo: pickup_data['provider_logo'],
-                name: pickup_data['name'],
-                description: pickup_data['description'],
-                street: pickup_data['street_address'],
-                city: pickup_data['city'],
-                postcode: pickup_data['postcode'],
-                country: pickup_data['country'],
-                distance: pickup_data['distance'],
-                checked: checked,
-              };
-              html = html + pk_use_template(window['pickup_template_' + id_carrier], replaces);
-            }
-            $(container).html(html + "</table>");
-          } else { 
-            $(container).html('No results found');
-          }
-        } else {
-          $(container).html(jsonData);
-        }
-      }
-      
-      //console.log(jsonData);
-    }
-  });
-}
-
-function pk_use_template(template, replaces) {
-  for (var param in replaces) {
-    template = template.replace('[' + param + ']', replaces[param]);
-  }
-  
-  return template;
-}

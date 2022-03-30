@@ -105,6 +105,21 @@
   color: #333;
 }
 
+.pakettikauppa-extracarrier .pk_dropdown_view .option-name {
+  display: block;
+}
+.pakettikauppa-extracarrier .pk_dropdown_view .option-address {
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+.pakettikauppa-extracarrier .pk_dropdown_view .option-distance {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
 /*******************************************************
  *                    RESPONSIVE
  *******************************************************/
@@ -131,6 +146,10 @@
   }
   .pakettikauppa-extracarrier .pickups_search_holder input[type="button"] {
     width: 100%;
+  }
+  .pakettikauppa-extracarrier .pk_dropdown_view .option-distance {
+    top: unset;
+    bottom: 0;
   }
 }
 

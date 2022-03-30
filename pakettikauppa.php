@@ -348,6 +348,26 @@ class Pakettikauppa extends CarrierModule
                     'description' => $this->l('How many pickup points are shown.'),
                 ),
                 array(
+                    'name' => 'pickup_list_style',
+                    'tpl' => 'select-simple',
+                    'label' => $this->l('Pickup point selection style'),
+                    'value' => array(
+                        'radio' => $this->l('Radio buttons'),
+                        'dropdown' => $this->l('Dropdown menu'),
+                    ),
+                    'selected' => Configuration::get('PAKETTIKAUPPA_LIST_STYLE'),
+                    'default' => 'radio',
+                    'class' => 'fixed-width-xl',
+                    'description' => $this->l('How to display a list of pick-up points.'),
+                ),
+                array(
+                    'name' => 'pickup_auto_select',
+                    'tpl' => 'select-switcher',
+                    'label' => $this->l('Automatically select a pickup point'),
+                    'selected' => Configuration::get('PAKETTIKAUPPA_AUTO_SELECT'),
+                    'description' => $this->l('Automatically select the nearest pickup point.') . ' ' . $this->l('Not working, when selection style is radio buttons.'),
+                ),
+                array(
                     'name' => 'cod_modules',
                     'tpl' => 'select-checkbox',
                     'label' => $this->l('C.O.D. modules'),
@@ -546,6 +566,8 @@ class Pakettikauppa extends CarrierModule
 
         if (((bool)Tools::isSubmit('submitPakettikauppaFront')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_MAX_PICKUPS', Tools::getValue('pickup_points_count'));
+            Configuration::updateValue('PAKETTIKAUPPA_LIST_STYLE', Tools::getValue('pickup_list_style'));
+            Configuration::updateValue('PAKETTIKAUPPA_AUTO_SELECT', Tools::getValue('pickup_auto_select'));
             Configuration::updateValue('PAKETTIKAUPPA_COD_MODULES', serialize(Tools::getValue('cod_modules')));
 
             $this->context->cookie->__set('success_msg', $this->l('Checkout settings saved successfully'));
@@ -688,12 +710,29 @@ class Pakettikauppa extends CarrierModule
      */
     public function hookHeader()
     {
+        /*** Load style and script files ***/
+        $this->context->controller->addJS($this->_path . 'views/js/dropdown.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/dropdown.css');
+
+        $this->context->controller->addJS($this->_path . 'views/js/front_global.js');
         if (version_compare(_PS_VERSION_, '1.7', '>=')) {
             $this->context->controller->addJS($this->_path . 'views/js/front_17.js');
             $this->context->controller->addCSS($this->_path . 'views/css/front_17.css');
         } else {
             $this->context->controller->addJS($this->_path . 'views/js/front_16.js');
             $this->context->controller->addCSS($this->_path . 'views/css/front_16.css');
+        }
+
+        /*** Load global script variables ***/
+        if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
+            $this->context->smarty->assign(array(
+                'ajax_url' => $this->_path . 'ajax.php',
+                'configs' => array(
+                    'autoselect' => Configuration::get('PAKETTIKAUPPA_AUTO_SELECT'),
+                ),
+            ));
+
+            return $this->context->smarty->fetch($this->local_path . 'views/templates/front/checkout_header.tpl');
         }
     }
 
@@ -711,13 +750,16 @@ class Pakettikauppa extends CarrierModule
         $client = $this->core->api->load_client();
 
         $id_carrier = $params['cart']->id_carrier;
-        $template = 'front/carrier_list_16.tpl';
+        $template = 'front/carrier_list.tpl';
 
         if (version_compare(_PS_VERSION_, '1.7', '>=')) {
             $version = '17';
             $id_carrier = $params['carrier']['id'];
-            $template = 'front/carrier_list_17.tpl';
         }
+
+        $pickup_list_style = Configuration::get('PAKETTIKAUPPA_LIST_STYLE');
+        if (empty($pickup_list_style)) $pickup_list_style = 'radio';
+        $template = str_replace('.tpl', '_' . $pickup_list_style . '.tpl', $template);
 
         $address = new Address($params['cart']->id_address_delivery);
         $country_iso = Country::getIsoById($address->id_country);
@@ -778,7 +820,6 @@ class Pakettikauppa extends CarrierModule
             if (!empty($current_values['point']) && $current_values['method'] == $selected_method['code']) {
                 $pickup_point_id = $current_values['point'];
             } else {
-                $pickup_point_id = $pickup_points[0]->pickup_point_id;
                 if ($version == '16') {
                     $this->core->sql->update_row(array(
                         'table' => 'main',
@@ -789,6 +830,22 @@ class Pakettikauppa extends CarrierModule
                             'id_cart' => $params['cart']->id,
                         ),
                     ));
+                }
+            }
+            if (!empty(Configuration::get('PAKETTIKAUPPA_AUTO_SELECT'))) {
+                if (empty($pickup_point_id)) {
+                    $pickup_point_id = $pickup_points[0]->pickup_point_id;
+                    if ($current_values['method'] === $selected_method['code']) {
+                        $this->core->sql->update_row(array(
+                            'table' => 'main',
+                            'update' => array(
+                                'pickup_point_id' => $pickup_point_id,
+                            ),
+                            'where' => array(
+                                'id_cart' => $params['cart']->id,
+                            ),
+                        ));
+                    }
                 }
             }
         }
@@ -816,6 +873,8 @@ class Pakettikauppa extends CarrierModule
             'id_carrier' => $id_carrier,
             'display' => $display,
             'current_postcode' => $address->postcode,
+            'search_img' => $this->_path . 'views/img/icon-search.png',
+            'version' => $version,
         ));
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/' . $template);
         
