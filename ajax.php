@@ -129,6 +129,72 @@ switch (Tools::getValue('action')) {
             echo true;
         }
         break;
+    case 'updateOrder':
+        if (empty(Tools::getValue('id_cart'))) {
+            die('empty_cart_id');
+        }
+
+        $pakketikauppa_order = $class_pakettikauppa->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(),
+            'where' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+            ),
+        ));
+        if (empty($pakketikauppa_order)) {
+            die('order_not_found');
+        }
+
+        $selected_services = Tools::getValue('additional_services');
+
+        $result = $class_pakettikauppa->sql->update_row(array(
+            'table' => 'main',
+            'update' => array(
+                'pickup_point_id' => (!empty(Tools::getValue('new_pickup_point'))) ? Tools::getValue('new_pickup_point') : $pakketikauppa_order['pickup_point_id'],
+                'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
+            ),
+            'where' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+            ),
+        ));
+        if (!$result) {
+            die('failed_save');
+        }
+
+        echo 'save_success';
+        break;
+    case 'generateLabel':
+        //print_r($_POST);
+        if (empty(Tools::getValue('id_cart'))) {
+            die('empty_cart_id');
+        }
+
+        $pakketikauppa_order = $class_pakettikauppa->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(),
+            'where' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+            ),
+        ));
+        if (empty($pakketikauppa_order)) {
+            die('order_not_found');
+        }
+
+        $id_order = $class_pakettikauppa->sql->get_single_row(array(
+            'table' => _DB_PREFIX_ . 'orders',
+            'get_values' => array('id_order'),
+            'where' => array(
+                'id_cart' => Tools::getValue('id_cart'),
+            ),
+        ));
+        if (!isset($id_order['id_order'])) {
+            die('empty_order_id');
+        }
+        $id_order = (int)$id_order['id_order'];
+
+        $class_pakettikauppa->label->generate_label_pdf($id_order, true);
+//TODO: Padaryti, jog neleistu serviso, jeigu jo nepalaiko (neaišku ar galima taip)
+        break;
     default:
         echo 'Action not exists';
 }

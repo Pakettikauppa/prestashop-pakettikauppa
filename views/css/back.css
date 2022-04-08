@@ -26,6 +26,7 @@
 * to avoid any conflicts with others containers.
 */
 
+/*** Global ***/
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
@@ -36,20 +37,22 @@
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
-.help-block .variable_row {
+/*** Module configuration page ***/
+.pakettikauppa.configs .help-block .variable_row {
   display: block;
   margin-bottom: 5px;
 }
-.help-block .variable_row:last-child {
+.pakettikauppa.configs .help-block .variable_row:last-child {
   margin-bottom: 0;
 }
-.help-block .variable_row.clickable code {
+.pakettikauppa.configs .help-block .variable_row.clickable code {
   cursor: pointer;
 }
-.help-block .variable_row.clickable code:hover {
+.pakettikauppa.configs .help-block .variable_row.clickable code:hover {
   background-color: #ddd;
 }
 
+/*** Pakettikauppa orders list table ***/
 .table.pakettikauppa .btn-group-action a.btn {
   margin: 0px 0px 0px 3px;
 }
@@ -70,4 +73,50 @@
 .table.pakettikauppa .table.additional_services input[type="checkbox"],
 .table.pakettikauppa .table.additional_services label {
   cursor: pointer;
+}
+.table.pakettikauppa .service_error {
+  display: block;
+  color: #f00;
+  font-size: 80%;
+}
+
+/*** Pakettikauppa block in order edit page ***/
+.pakettikauppa.block_in_order .row {
+  margin-bottom: 10px;
+}
+.pakettikauppa.block_in_order .row:last-of-type {
+  margin-bottom: 0;
+}
+.pakettikauppa.block_in_order .pk-row-submit {
+  padding-top: 5px;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+}
+.pakettikauppa.block_in_order span.title {
+  display: block;
+  margin-bottom: 3px;
+}
+.pakettikauppa.block_in_order span.provider {
+  opacity: 0.5;
+  font-style: italic;
+}
+.pakettikauppa.block_in_order span.name {
+  font-weight: bold;
+}
+.pakettikauppa.block_in_order span.address {
+  display: block;
+  font-size: 80%;
+}
+.pakettikauppa.block_in_order .pk-row-services .row {
+  margin: 0;
+}
+.pakettikauppa.block_in_order .pk-row-services label {
+  font-weight: unset;
+  margin: unset;
+}
+.pakettikauppa.block_in_order .pk-row-services .service_param input {
+  display: inline-block;
+}
+.pakettikauppa.block_in_order .pk-row-labels {
+  margin-top: 20px;
 }

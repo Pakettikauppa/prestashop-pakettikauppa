@@ -60,6 +60,8 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $currency = new \CurrencyCore($order->id_currency);
 
       /*** START Additional services ***/
+      $all_additional_services = $this->core->api->get_additional_services($ship_detail['method']);
+      $external_registered_services = array();
       $additional_services = array();
 
       $selected_services = (!empty($ship_detail['services'])) ? unserialize($ship_detail['services']) : array();
@@ -71,10 +73,11 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       if (!empty($ship_detail['point'])) {
         $additional_services['2106']['pickup_point_id'] = $ship_detail['point'];
       }
+      $external_registered_services[] = '2106';
 
       /* 3101 - COD */
       $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
-      if (!empty($cod_modules)) {
+      if (!empty($cod_modules) && isset($all_additional_services['3101'])) {
         foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
           if (in_array($module['id_module'], $cod_modules)) {
             if ($module['name'] === $order->module) {
@@ -93,29 +96,22 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
           }
         }
       }
+      $external_registered_services[] = '3101';
 
       /* 3102 - Multiple shipments */
       $total_shipments = 1; //TODO: Make to work
       if ($total_shipments > 1) {
         $additional_services['3102']['count'] = $total_shipments;
       }
+      $external_registered_services[] = '3102';
       
-      /* 3104 - Fragile */
-      if (in_array('fragile', $selected_services)) {
-        $additional_services['3104'] = array();
-      }
-
-      /* 3139 - Arrival notification */ //TODO: Not working
-      /*if (!empty($address->phone)) {
-        $additional_services['3139']['telephone'] = $address->phone;
-      }
-      if (!empty($customer_data->email)) {
-        $additional_services['3139']['email'] = $customer_data->email;
-      }*/
-      
-      /* 3174 - Oversized (Large) */
-      if (in_array('oversized', $selected_services)) {
-        $additional_services['3174'] = array();
+      foreach ($all_additional_services as $service_code => $service_params) {
+        if (in_array($service_code, $external_registered_services)) {
+          continue;
+        }
+        if (in_array($service_code, $selected_services)) {
+          $additional_services[$service_code] = array();
+        }
       }
       /*** END Additional services ***/
       
