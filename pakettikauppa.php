@@ -34,6 +34,17 @@ class Pakettikauppa extends CarrierModule
 {
     protected $config_form = false;
     protected $core;
+    protected $hooks = array(
+        'header',
+        'backOfficeHeader',
+        'updateCarrier',
+        'actionValidateOrder',
+        'actionOrderStatusPostUpdate',
+        'actionAdminControllerSetMedia',
+        'displayCarrierList',
+        'displayCarrierExtraContent',
+        'displayAdminOrder',
+    );
 
     public function __construct()
     {
@@ -56,10 +67,26 @@ class Pakettikauppa extends CarrierModule
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
         $this->core = new PS_Pakettikauppa(array(
-          'translates' => array(
-            'error_order_object' => $this->l('Cant load Order object'),
-            'error_ship_not_found' => $this->l('Shipment information not found'),
-          ),
+            'translates' => array(
+                'error_order_object' => $this->l('Cant load Order object'),
+                'error_ship_not_found' => $this->l('Shipment information not found'),
+            ),
+            'services_translates' => array(
+                '3101' => $this->l('Cash on delivery'),
+                '3102' => $this->l('Multi-package'),
+                '3104' => $this->l('Fragile'),
+                '3106' => $this->l('Saturday delivery'),
+                '3143' => $this->l('Small amount of hazardous substance'),
+                '3146' => $this->l('Pickup reminder by letter'),
+                '3163' => $this->l('To be handed over in person'),
+                '3164' => $this->l('Delivery without acknowledging the recipient'),
+                '3165' => $this->l('Extension of shelf life'),
+                '3166' => $this->l('Call before distribution'),
+                '3174' => $this->l('Oversized'),
+                '3376' => $this->l('Blocking of the control to the outdoor vending machine'),
+                '9902' => $this->l('Transaction code'),
+                //'9904' => $this->l(''),
+            ),
         ));
     }
 
@@ -85,11 +112,21 @@ class Pakettikauppa extends CarrierModule
         Configuration::updateValue('PAKETTIKAUPPA_LIVE_MODE', false);
         Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', NULL);
 
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('backOfficeHeader') &&
-            $this->registerHook('updateCarrier') && $this->registerHook('actionValidateOrder') && $this->registerHook('actionOrderStatusPostUpdate') && $this->installModuleTab() &&
-            $this->registerHook('displayCarrierList') && $this->registerHook('displayCarrierExtraContent');
+        if (parent::install()) {
+            foreach ($this->hooks as $hook) {
+                if (!$this->registerHook($hook)) {
+                    return false;
+                }
+            }
+
+            if (!$this->installModuleTab()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     public function uninstall()
@@ -166,11 +203,11 @@ class Pakettikauppa extends CarrierModule
         $this->context->smarty->assign(array(
             'token' => Tools::getValue('token'),
             'module_url' => $this->_path,
-            'template_parts_path' => $this->local_path . 'views/templates/admin/parts/configure',
+            'template_parts_path' => $this->local_path . 'views/templates/admin/parts/module_configure',
             'fields' => $this->get_configuration_fields(),
             'warehouses' => Configuration::get('PS_ADVANCED_STOCK_MANAGEMENT'),
         ));
-        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/page-module_configure.tpl');
 
         return $this->show_msg() . $output;
     }
@@ -697,11 +734,27 @@ class Pakettikauppa extends CarrierModule
      */
     public function hookBackOfficeHeader()
     {
+        $this->context->controller->addCSS($this->_path . 'views/css/back.css');
+
         if (Tools::getValue('module_name') == $this->name) {
             $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
-            
-            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
+        }
+    }
+
+    public function hookActionAdminControllerSetMedia($params) {
+        if (!empty($params['cart'])) {
+            $carrier = new Carrier($params['cart']->id_carrier);
+            $pakketikauppa_carrier = $this->core->sql->get_single_row(array(
+                'table' => 'methods',
+                'get_values' => array(),
+                'where' => array(
+                    'id_carrier_reference' => $carrier->id_reference,
+                ),
+            ));
+            if (!empty($pakketikauppa_carrier)) {
+                $this->context->controller->addJS($this->_path.'views/js/back-order_edit.js');
+            }
         }
     }
 
@@ -890,5 +943,133 @@ class Pakettikauppa extends CarrierModule
             //if ($shipment['status'] === 'success') {}
             //$this->core->label->generate_label_pdf($params['id_order']); //Or generate and open PDF
         }
+    }
+
+    public function hookDisplayAdminOrder($id_order)
+    {
+        $template = 'hook-admin_order.tpl';
+        $critical_error = '';
+        $pickup_points = array();
+        $selected_point = '';
+        $shipping_labels = array();
+        $additional_services = array();
+        $selected_services = array();
+
+        $order = new Order((int)$id_order['id_order']);
+        $carrier = new Carrier($order->id_carrier);
+        
+        $is_cod = $this->is_cod($order->module);
+
+        $pakketikauppa_carrier = $this->core->sql->get_single_row(array(
+            'table' => 'methods',
+            'get_values' => array(),
+            'where' => array(
+                'id_carrier_reference' => $carrier->id_reference,
+            ),
+        ));
+
+        if (empty($pakketikauppa_carrier)) { //Not Pakettikauppa Shipping
+            return;
+        }
+
+        $pakketikauppa_order = $this->core->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(),
+            'where' => array(
+                'id_cart' => $order->id_cart,
+            ),
+        ));
+
+        if (!empty($pakketikauppa_order)) {
+            $additional_services = $this->core->api->get_additional_services($pakketikauppa_carrier['method_code']);
+            $selected_services = $this->get_selected_additional_services($order->id_cart, $is_cod);
+
+            if (!empty($pakketikauppa_order['track_number'])) {
+                $shipping_labels[] = $pakketikauppa_order['track_number'];
+            }
+
+            if ($pakketikauppa_carrier['has_pp']) {
+                $client = $this->core->api->load_client();
+                $address = new Address($order->id_address_delivery);
+                $country_iso = Country::getIsoById($address->id_country);
+                $shipping_methods = $client->listShippingMethods();
+
+                try {
+                    $selected_point = json_decode($client->getPickupPointInfo($pakketikauppa_order['pickup_point_id'], $pakketikauppa_carrier['method_code']));
+                    $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $pakketikauppa_carrier['method_code'], 100);
+                } catch (Exception $ex) {
+                    $critical_error = $this->l('Error from Pakettikauppa server') . ': ' . $ex->getMessage();
+                    $selected_point = '';
+                    $pickup_points = array();
+                }
+            }
+        } else {
+            $critical_error = $this->l('Pakettikauppa order information was not found');
+        }
+
+        $this->context->smarty->assign(array(
+            'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_order',
+            'critical_error' => $critical_error,
+            'method_name' => $carrier->name,
+            'pickup_points' => $pickup_points,
+            'selected_pickup_point' => $selected_point,
+            'shipping_labels' => $shipping_labels,
+            'tracking_url' => $carrier->url,
+            'controller_url' => $this->context->link->getAdminLink('AdminPakettikauppa'),
+            'ajax_url' => $this->_path . 'ajax.php',
+            'cart_id' => $order->id_cart,
+            'all_additional_services' => $additional_services,
+            'selected_additional_services' => $selected_services,
+            'payment_is_cod' => $is_cod,
+            'order_amount' => Tools::ps_round($order->getOrdersTotalPaid(), 2),
+            'currency' =>  $this->context->currency,
+        ));
+
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/' . $template);
+
+        return $output;
+    }
+
+    private function is_cod($payment_module_name) {
+        $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
+        if (!empty($cod_modules)) {
+            foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
+                if (in_array($module['id_module'], $cod_modules)) {
+                    if ($module['name'] === $payment_module_name) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private function get_selected_additional_services($cart_id, $is_cod = false) {
+        $sql_selected_services = $this->core->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array('additional_services'),
+            'where' => array(
+                'id_cart' => $cart_id,
+            ),
+        ));
+        $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
+        if (empty($selected_services)) { //If unserialize return false
+            $selected_services = array();
+        }
+        
+        if ($is_cod && !in_array('3101', $selected_services)) {
+            $this->core->sql->update_row(array(
+                'table' => 'main',
+                'update' => array(
+                    'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
+                ),
+                'where' => array(
+                    'id_cart' => $cart_id,
+                ),
+            ));
+            $selected_services[] = '3101';
+        }
+
+        return $selected_services;
     }
 }

@@ -41,6 +41,7 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->list_no_link = true;
         $this->addRowAction('Pdf');
         $this->identifier = 'id_cart';
+        $this->simple_header = false;
 
         parent::__construct();
 
@@ -48,15 +49,31 @@ class AdminPakettikauppaController extends ModuleAdminController
         date_default_timezone_set("Asia/Calcutta");
 
         $this->core = new PS_Pakettikauppa(array(
-          'translates' => array(
-            'error_order_object' => $this->l('Cant load Order object'),
-            'error_ship_not_found' => $this->l('Shipment information not found'),
-            'error_required_postcode' => $this->l('Sender postcode is required'),
-            'error_failed_get_tracking' => $this->l('Failed get tracking code'),
-            'error_tracking_empty' => $this->l('Empty tracking code value'),
-            'error_label_pdf_empty' => $this->l('Not received label PDF'),
-            'error_from_api' => $this->l('Got error from Pakettikauppa server'),
-          ),
+            'translates' => array(
+                'error_order_object' => $this->l('Cant load Order object'),
+                'error_ship_not_found' => $this->l('Shipment information not found'),
+                'error_required_postcode' => $this->l('Sender postcode is required'),
+                'error_failed_get_tracking' => $this->l('Failed get tracking code'),
+                'error_tracking_empty' => $this->l('Empty tracking code value'),
+                'error_label_pdf_empty' => $this->l('Not received label PDF'),
+                'error_from_api' => $this->l('Got error from Pakettikauppa server'),
+            ),
+            'services_translates' => array(
+                '3101' => $this->l('Cash on delivery'),
+                '3102' => $this->l('Multi-package'),
+                '3104' => $this->l('Fragile'),
+                '3106' => $this->l('Saturday delivery'),
+                '3143' => $this->l('Small amount of hazardous substance'),
+                '3146' => $this->l('Pickup reminder by letter'),
+                '3163' => $this->l('To be handed over in person'),
+                '3164' => $this->l('Delivery without acknowledging the recipient'),
+                '3165' => $this->l('Extension of shelf life'),
+                '3166' => $this->l('Call before distribution'),
+                '3174' => $this->l('Oversized'),
+                '3376' => $this->l('Blocking of the control to the outdoor vending machine'),
+                '9902' => $this->l('Transaction code'),
+                //'9904' => $this->l(''),
+            ),
         ));
 
         $this->_select = "o.id_order,
@@ -75,6 +92,7 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'title' => $this->l('Order ID'),
                 'class' => 'fixed-width-xs',
                 'type' => 'text',
+                'callback' => 'printOrderLink',
                 'search' => true,
                 'align' => 'center',
                 'havingFilter' => true
@@ -119,7 +137,7 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'type' => 'text',
                 'search' => true,
                 'align' => 'center',
-                'havingFilter' => true
+                'havingFilter' => true,
             ),
             'services' => array(
                 'title' => $this->l('Use services'),
@@ -130,6 +148,7 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'align' => 'center',
                 'havingFilter' => false,
                 'orderby' => false,
+                'hint' => $this->l('You can set additional services in order edit page. COD service adding automatically.'),
             ),
         );
     }
@@ -180,6 +199,13 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->context->controller->addJS(_MODULE_DIR_ . $this->module->name . '/views/js/back-orders_list.js');
     }
 
+    public function printOrderLink($id_order, $row)
+    {
+        $link = $this->context->link->getAdminLink('AdminOrders').'&id_order='.(int)$id_order.'&vieworder';
+
+        return '<a href="' . $link . '" target="_blank">' . $id_order . '</a>';
+    }
+
     public function getCarrierName($id_carrier, $tr)
     {
         $carrier = new Carrier($id_carrier);
@@ -222,10 +248,22 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function additionalServices($cart_id, $row_data)
     {
-        $additional_services = array(
-            'fragile' => $this->l('Fragile'),
-            'oversized' => $this->l('Oversized'),
-        );
+        $order = (isset($row_data['id_order'])) ? new \Order((int)$row_data['id_order']) : '';
+
+        $is_cod = false;
+        $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
+        if (!empty($order) && !empty($cod_modules)) {
+            foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
+                if (in_array($module['id_module'], $cod_modules)) {
+                    if ($module['name'] === $order->module) {
+                        $is_cod = true;
+                    }
+                }
+            }
+        }
+
+        $additional_services = $this->core->api->get_additional_services($row_data['method_code']);
+        $selected_services_text = '';
 
         $sql_selected_services = $this->core->sql->get_single_row(array(
             'table' => 'main',
@@ -239,12 +277,40 @@ class AdminPakettikauppaController extends ModuleAdminController
             $selected_services = array();
         }
 
+        if ($is_cod && !in_array('3101', $selected_services) && isset($additional_services['3101'])) {
+            $selected_services[] = '3101';
+            $this->core->sql->update_row(array(
+                'table' => 'main',
+                'update' => array(
+                    'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
+                ),
+                'where' => array(
+                    'id_cart' => $cart_id,
+                ),
+            ));
+        }
+
+        foreach ($selected_services as $service_code) {
+            if (!isset($additional_services[$service_code])) {
+                continue;
+            }
+            if (!empty($selected_services_text)) {
+                $selected_services_text .= ', ';
+            }
+            $selected_services_text .= '<span title="' . $additional_services[$service_code]->name . '">' . $service_code . '</span>';
+        }
+        if (empty($selected_services_text)) {
+            $selected_services_text = '—';
+        }
+
         $this->context->smarty->assign(array(
             'order_id' => (isset($row_data['id_order'])) ? $row_data['id_order'] : $cart_id,
             'cart_id' => $cart_id,
             'row_data' => $row_data,
             'additional_services' => $additional_services,
             'selected_services' => $selected_services,
+            'selected_services_text' => $selected_services_text,
+            'is_cod' => $is_cod,
         ));
 
         return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/table-additional_services.tpl');

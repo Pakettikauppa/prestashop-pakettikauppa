@@ -1,4 +1,4 @@
-function pk_save_additional_services(order_id) {
+function pk_save_additional_services(order_id) { //No more using
   var cart_id = $("#order_" + order_id + "_cart_id").val();
   var selected_checkboxes = document.querySelectorAll('input[name="additional_services_' + order_id + '[]"]:checked');
   var selected_services = [];
