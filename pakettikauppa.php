@@ -40,6 +40,7 @@ class Pakettikauppa extends CarrierModule
         'updateCarrier',
         'actionValidateOrder',
         'actionOrderStatusPostUpdate',
+        'actionAdminControllerSetMedia',
         'displayCarrierList',
         'displayCarrierExtraContent',
         'displayAdminOrder',

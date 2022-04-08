@@ -33,6 +33,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Carrier') ) {
           'id_carrier_reference' => $carrier_reference,
           'method_code' => $shipping_method->shipping_method_code,
           'has_pp' => (!empty($shipping_method->has_pickup_points)) ? $shipping_method->has_pickup_points : 0,
+          //TODO: Make additional services save to column 'services'
         ),
         'on_duplicate' => array(
           'method_code' => $shipping_method->shipping_method_code,

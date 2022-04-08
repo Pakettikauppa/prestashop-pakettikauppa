@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-    <name>pakettikauppa</name>
-    <displayName><![CDATA[Pakettikauppa Shipping Module]]></displayName>
-    <version><![CDATA[1.0.0]]></version>
-    <description><![CDATA[Pakettikauppa Shipping Module provide you best shipping service in your country]]></description>
-    <author><![CDATA[Pakettikauppa]]></author>
-    <tab><![CDATA[shipping_logistics]]></tab>
-    <is_configurable>1</is_configurable>
-    <need_instance>0</need_instance>
+	<name>pakettikauppa</name>
+	<displayName><![CDATA[Pakettikauppa Shipping Module]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Pakettikauppa Shipping Module provide you best shipping service in your country]]></description>
+	<author><![CDATA[Pakettikauppa]]></author>
+	<tab><![CDATA[shipping_logistics]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>0</need_instance>
 	<limited_countries></limited_countries>
 </module>
