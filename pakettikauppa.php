@@ -734,7 +734,7 @@ class Pakettikauppa extends CarrierModule
     public function hookBackOfficeHeader()
     {
         $this->context->controller->addCSS($this->_path . 'views/css/back.css');
-//die(print_r(Tools::getValue('controller'),true));
+
         if (Tools::getValue('module_name') == $this->name) {
             $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');

@@ -138,7 +138,6 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'search' => true,
                 'align' => 'center',
                 'havingFilter' => true,
-                'default' => '-',
             ),
             'services' => array(
                 'title' => $this->l('Use services'),

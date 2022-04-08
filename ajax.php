@@ -164,7 +164,6 @@ switch (Tools::getValue('action')) {
         echo 'save_success';
         break;
     case 'generateLabel':
-        //print_r($_POST);
         if (empty(Tools::getValue('id_cart'))) {
             die('empty_cart_id');
         }

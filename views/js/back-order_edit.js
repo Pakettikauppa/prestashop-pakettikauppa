@@ -44,9 +44,6 @@ function pk_update_order() {
           $("#pk_ajax_msg").addClass("alert-success");
           $("#current_pickup_point").hide();
           $("#updated_pickup_point").show();
-          /*setTimeout(function () {
-            window.location.reload();
-          }, 1000);*/
         } else {
           $("#pk_ajax_msg").addClass("alert-danger");
         }
@@ -56,26 +53,6 @@ function pk_update_order() {
         $("#pk_ajax_msg").html(pk_texts.unknown_error);
       }
       $("#pk_ajax_msg").slideDown("slow");
-    }
-  });
-}
-
-function pk_generate_label() {
-  var form_data = $("#pakettikauppa-order_content").serialize()+'&'+$.param({
-    ajax: "1",
-    action: "generateLabel",
-    id_cart: pk_cart_id,
-    token: pk_token,
-  });
-
-  $.ajax({
-    type:"POST",
-    url: pk_ajax_url,
-    async: false,
-    //dataType: "json",
-    data: form_data,
-    success : function(result) {
-      console.log(result);
     }
   });
 }
