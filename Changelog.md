@@ -32,3 +32,4 @@
 - added a option to choose pickup points list style
 - added Pakettikauppa block in order edit page
 - fixed additional service usage according to delivery method
+- added variables to emails
