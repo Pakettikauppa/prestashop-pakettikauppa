@@ -35,16 +35,19 @@ class Pakettikauppa extends CarrierModule
     protected $config_form = false;
     protected $core;
     protected $hooks = array(
-        'header',
-        'backOfficeHeader',
-        'updateCarrier',
-        'actionValidateOrder',
-        'actionOrderStatusPostUpdate',
         'actionAdminControllerSetMedia',
-        'displayCarrierList',
-        'displayCarrierExtraContent',
+        'actionEmailAddAfterContent',
+        'actionOrderStatusPostUpdate',
+        'actionValidateOrder',
+        'backOfficeHeader',
         'displayAdminOrder',
+        'displayCarrierExtraContent',
+        'displayCarrierList',
+        'header',
+        'sendMailAlterTemplateVars',
+        'updateCarrier',
     );
+    protected $tracking_url = 'https://www.pakettikauppa.fi/seuranta/?@'; //@ - tracking number
 
     public function __construct()
     {
@@ -682,7 +685,7 @@ class Pakettikauppa extends CarrierModule
         $carrier->range_behavior = 0;
         $carrier->external_module_name = $this->name;
         $carrier->shipping_method = 2;
-        $carrier->url = 'https://www.pakettikauppa.fi/seuranta/?@'; //@ - tracking number
+        $carrier->url = $this->tracking_url;
 
         foreach (Language::getLanguages() as $lang)
             $carrier->delay[$lang['id_lang']] = $this->l('Super fast delivery');
@@ -943,6 +946,83 @@ class Pakettikauppa extends CarrierModule
             //if ($shipment['status'] === 'success') {}
             //$this->core->label->generate_label_pdf($params['id_order']); //Or generate and open PDF
         }
+    }
+
+    public function hookSendMailAlterTemplateVars($params) //Add template variables for PS 1.7
+    {
+        if (empty($params['cart']->id)) {
+            return;
+        }
+
+        $pakketikauppa_order = $this->core->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(),
+            'where' => array(
+                'id_cart' => $params['cart']->id,
+            ),
+        ));
+        if (empty($pakketikauppa_order)) {
+            return;
+        }
+
+        $carrier = new Carrier($params['cart']->id_carrier);
+
+        $tracking_number = $pakketikauppa_order['track_number'];
+        $tracking_url = (!empty($carrier->url)) ? $carrier->url : $this->tracking_url;
+        $tracking_url = str_replace('@', $tracking_number, $tracking_url);
+
+        $template_vars = array(
+            '{shipping_number}' => $tracking_number,
+            '{followup}' => $tracking_url,
+        );
+
+        foreach ($template_vars as $variable_key => $variable_value) {
+            if (empty($params['template_vars'][$variable_key])) {
+                $params['template_vars'][$variable_key] = $variable_value;
+            }
+        }
+
+        return $params;
+    }
+
+    public function hookActionEmailAddAfterContent($params) //Add template variables for PS 1.6
+    {
+        if (version_compare(_PS_VERSION_, '1.7', '>=')) {
+            return;
+        }
+
+        if (empty($params['cart']->id)) {
+            return;
+        }
+
+        $pakketikauppa_order = $this->core->sql->get_single_row(array(
+            'table' => 'main',
+            'get_values' => array(),
+            'where' => array(
+                'id_cart' => $params['cart']->id,
+            ),
+        ));
+        if (empty($pakketikauppa_order)) {
+            return;
+        }
+
+        $carrier = new Carrier($params['cart']->id_carrier);
+
+        $tracking_number = $pakketikauppa_order['track_number'];
+        $tracking_url = (!empty($carrier->url)) ? $carrier->url : $this->tracking_url;
+        $tracking_url = str_replace('@', $tracking_number, $tracking_url);
+
+        $template_vars = array(
+            '{shipping_number}' => $tracking_number,
+            '{followup}' => $tracking_url,
+        );
+
+        foreach ($template_vars as $variable_key => $variable_value) {
+            $params['template_html'] = str_replace($variable_key, $variable_value, $params['template_html']);
+            $params['template_txt'] = str_replace($variable_key, $variable_value, $params['template_txt']);
+        }
+
+        return $params;
     }
 
     public function hookDisplayAdminOrder($id_order)
