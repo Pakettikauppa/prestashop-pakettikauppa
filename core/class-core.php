@@ -22,6 +22,8 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
     {    
       self::$instance = $this;
 
+      date_default_timezone_set(\Configuration::get('PS_TIMEZONE')); //Fix time zone in module classes
+
       $this->configs = $this->get_configs($configs);
       //Load classes
       $this->sql = $this->load_sql_class();
