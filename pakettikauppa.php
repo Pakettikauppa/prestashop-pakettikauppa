@@ -115,20 +115,6 @@ class Pakettikauppa extends CarrierModule
         Configuration::updateValue('PAKETTIKAUPPA_LIVE_MODE', false);
         Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', NULL);
 
-        if (parent::install()) {
-            foreach ($this->hooks as $hook) {
-                if (!$this->registerHook($hook)) {
-                    return false;
-                }
-            }
-
-            if (!$this->installModuleTab()) {
-                return false;
-            }
-
-            return true;
-        }
-
         $this->add_custom_order_state(array(
             'name' => 'PAKETTIKAUPPA_CUSTOM_STATE_READY',
             'titles' => array(
@@ -145,6 +131,20 @@ class Pakettikauppa extends CarrierModule
             'color' => '#FF2E33',
             'img' => 'state-error',
         ));
+
+        if (parent::install()) {
+            foreach ($this->hooks as $hook) {
+                if (!$this->registerHook($hook)) {
+                    return false;
+                }
+            }
+
+            if (!$this->installModuleTab()) {
+                return false;
+            }
+
+            return true;
+        }
 
         return false;
     }
@@ -1089,7 +1089,8 @@ class Pakettikauppa extends CarrierModule
     public function hookDisplayAdminOrder($id_order)
     {
         $template = 'hook-admin_order.tpl';
-        $critical_error = '';
+        $critical_errors = array();
+        $warning_errors = array();
         $pickup_points = array();
         $selected_point = '';
         $shipping_labels = array();
@@ -1139,18 +1140,23 @@ class Pakettikauppa extends CarrierModule
                     $selected_point = json_decode($client->getPickupPointInfo($pakketikauppa_order['pickup_point_id'], $pakketikauppa_carrier['method_code']));
                     $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $pakketikauppa_carrier['method_code'], 100);
                 } catch (Exception $ex) {
-                    $critical_error = $this->l('Error from Pakettikauppa server') . ': ' . $ex->getMessage();
+                    $critical_errors[] = $this->l('Error from Pakettikauppa server') . ': ' . $ex->getMessage();
                     $selected_point = '';
                     $pickup_points = array();
                 }
             }
+
+            if ($is_cod && !isset($additional_services['3101'])) {
+                $warning_errors[] = $this->l('In the order is selected the Cash on Delivery (COD) payment method, but the selected shipping method does not support this service.') . '<br/><b>' . $this->l('The COD service will not be added to the generated label!') . '</b>';
+            }
         } else {
-            $critical_error = $this->l('Pakettikauppa order information was not found');
+            $critical_errors[] = $this->l('Pakettikauppa order information was not found');
         }
 
         $this->context->smarty->assign(array(
             'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_order',
-            'critical_error' => $critical_error,
+            'critical_errors' => $critical_errors,
+            'warning_errors' => $warning_errors,
             'method_name' => $carrier->name,
             'pickup_points' => $pickup_points,
             'selected_pickup_point' => $selected_point,
