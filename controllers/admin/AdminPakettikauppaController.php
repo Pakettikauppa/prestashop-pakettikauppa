@@ -202,6 +202,9 @@ class AdminPakettikauppaController extends ModuleAdminController
     public function printOrderLink($id_order, $row)
     {
         $link = $this->context->link->getAdminLink('AdminOrders').'&id_order='.(int)$id_order.'&vieworder';
+        if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
+            $link = $this->context->link->getAdminLink('AdminOrders', true, ['route' => 'admin_orders_view', 'action' => 'vieworder', 'orderId' => (int)$id_order]);
+        }
 
         return '<a href="' . $link . '" target="_blank">' . $id_order . '</a>';
     }
