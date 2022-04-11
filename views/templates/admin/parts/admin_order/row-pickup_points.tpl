@@ -15,7 +15,7 @@
     {include file="{$template_parts_path}/field-title.tpl" title="{l s='Change pickup point' mod='pakettikauppa'}"}
 
     <div class="col-lg-8">
-      <select class="pickup_point_list" name="new_pickup_point">
+      <select class="custom-select pickup_point_list" name="new_pickup_point">
         <option value="{$selected_pickup_point->pickup_point_id}" selected>
           {$selected_pickup_point->name} ({$selected_pickup_point->street_address}, {$selected_pickup_point->city})
         </option>

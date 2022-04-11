@@ -1,7 +1,11 @@
-<div class="panel pakettikauppa block_in_order">
-  {include file="{$template_parts_path}/panel-header.tpl" title="{l s='Pakettikauppa shipping' mod='pakettikauppa'}" icon="icon-truck"}
+<div class="{$table_style} pakettikauppa block_in_order">
+  {if $table_style == 'card'}
+    {include file="{$template_parts_path}/card-header.tpl" title="{l s='Pakettikauppa shipping' mod='pakettikauppa'}" icon="icon-truck"}
+  {else}
+    {include file="{$template_parts_path}/panel-header.tpl" title="{l s='Pakettikauppa shipping' mod='pakettikauppa'}" icon="icon-truck"}
+  {/if}
 
-  <div class="row pk-panel-content">
+  <div class="{if $table_style == 'card'}card-body{/if} row pk-panel-content">
     <div class="col-lg-12">
       {include file="{$template_parts_path}/row-messages.tpl"}
       

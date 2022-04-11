@@ -821,6 +821,9 @@ class Pakettikauppa extends CarrierModule
                 $this->context->controller->addJS($this->_path.'views/js/back-order_edit.js');
             }
         }
+        if (version_compare(_PS_VERSION_, '1.7.7', '>=') && 'AdminOrders' === Tools::getValue('controller')) {
+            $this->context->controller->addJS($this->_path.'views/js/back-order_edit.js');
+        }
     }
 
     /**
@@ -1154,6 +1157,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $this->context->smarty->assign(array(
+            'table_style' => (version_compare(_PS_VERSION_, '1.7.7', '>=')) ? 'card' : 'panel',
             'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_order',
             'critical_errors' => $critical_errors,
             'warning_errors' => $warning_errors,

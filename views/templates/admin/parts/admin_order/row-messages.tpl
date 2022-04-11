@@ -1,14 +1,14 @@
 {if !empty($critical_errors)}
   {foreach from=$critical_errors item=error_txt}
     <div class="alert alert-danger">
-      {$error_txt}
+      <p>{$error_txt}</p>
     </div>
   {/foreach}
 {/if}
 {if !empty($warning_errors)}
   {foreach from=$warning_errors item=error_txt}
     <div class="alert alert-warning">
-      {$error_txt}
+      <p>{$error_txt}</p>
     </div>
   {/foreach}
 {/if}
