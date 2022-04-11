@@ -25,6 +25,9 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         return array('status' => 'error', 'msg' => $this->trans['error_order_object']);
       }
 
+      $custom_state_success = \Configuration::get('PAKETTIKAUPPA_CUSTOM_STATE_READY');
+      $custom_state_error = \Configuration::get('PAKETTIKAUPPA_CUSTOM_STATE_ERROR');
+
       $ship_detail = $this->core->sql->get_single_row(array(
         'table' => 'main',
         'get_values' => array(
@@ -172,6 +175,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }
 
       if (empty($shipment['tracking_code'])) {
+        $this->change_order_state($id_order, $custom_state_error);
         if (!empty($shipment['status']) && $shipment['status'] === 'error') {
           return $shipment;
         }
@@ -184,6 +188,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
 
       $this->set_tracking_number_to_order($id_order, $shipment['tracking_code']);
 
+      $this->change_order_state($id_order, $custom_state_success);
       return $shipment;
     }
 
@@ -372,6 +377,27 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }
 
       return '';
+    }
+
+    private function change_order_state($order_id, $status_id)
+    {
+      if (empty($order_id) || empty($status_id)) {
+        return;
+      }
+
+      if (\Configuration::get('PAKETTIKAUPPA_USE_CUSTOM_STATES') != '1') {
+        return;
+      }
+
+      $order = new \Order((int) $order_id);
+
+      if ($order->current_state != $status_id) {
+        $history = new \OrderHistory();
+        $history->id_order = (int) $order_id;
+        $history->id_employee = (int) \Context::getContext()->employee->id;
+        $history->changeIdOrderState((int) $status_id, $order_id);
+        $history->add();
+      }
     }
   }
 }

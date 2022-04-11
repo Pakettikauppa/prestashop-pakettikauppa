@@ -115,6 +115,23 @@ class Pakettikauppa extends CarrierModule
         Configuration::updateValue('PAKETTIKAUPPA_LIVE_MODE', false);
         Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', NULL);
 
+        $this->add_custom_order_state(array(
+            'name' => 'PAKETTIKAUPPA_CUSTOM_STATE_READY',
+            'titles' => array(
+                'en' => 'Pakettikauppa shipment ready',
+            ),
+            'color' => '#233385',
+            'img' => 'state-ready',
+        ));
+        $this->add_custom_order_state(array(
+            'name' => 'PAKETTIKAUPPA_CUSTOM_STATE_ERROR',
+            'titles' => array(
+                'en' => 'Pakettikauppa shipment error',
+            ),
+            'color' => '#FF2E33',
+            'img' => 'state-error',
+        ));
+
         if (parent::install()) {
             foreach ($this->hooks as $hook) {
                 if (!$this->registerHook($hook)) {
@@ -164,6 +181,43 @@ class Pakettikauppa extends CarrierModule
                 $deleted_references[] = $carrier['id_reference'];
             }
         }
+    }
+
+    private function add_custom_order_state($params)
+    {
+        $existing_state_id = (int) Configuration::get($params['name']);
+        $existing_state = new OrderState((int) $existing_state_id, (int) $this->context->language->id);
+        
+        if (!$existing_state_id || !$existing_state->id) {
+            $new_state = new OrderState();
+            $new_state->name = array();
+            foreach (Language::getLanguages() as $language) {
+                $iso_code = strtolower($language['iso_code']);
+                if (isset($params['titles'][$iso_code])) {
+                    $new_state->name[$language['id_lang']] = $params['titles'][$iso_code];
+                } else {
+                    $new_state->name[$language['id_lang']] = $params['titles']['en'];
+                }
+            }
+            $new_state->send_email = false;
+            $new_state->color = $params['color'];
+            $new_state->hidden = false;
+            $new_state->delivery = false;
+            $new_state->logable = true;
+            $new_state->invoice = false;
+            $new_state->unremovable = false;
+            if ($new_state->add()) {
+                if (!empty($params['img'])) {
+                    $img_source = $this->local_path . 'views/img/' . $params['img'] . '.gif';
+                    $img_destination = _PS_ROOT_DIR_ . '/img/os/' . $new_state->id . '.gif';
+                    copy($img_source, $img_destination);
+                }
+                Configuration::updateValue($params['name'], $new_state->id);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /*
@@ -436,6 +490,13 @@ class Pakettikauppa extends CarrierModule
                     'value' => Configuration::get('PAKETTIKAUPPA_LABEL_COMMENT'),
                     'description' => $desc_comment_on_label,
                 ),
+                array(
+                    'name' => 'use_custom_states',
+                    'tpl' => 'select-switcher',
+                    'label' => $this->l('Use custom order states'),
+                    'selected' => Configuration::get('PAKETTIKAUPPA_USE_CUSTOM_STATES'),
+                    'description' => $this->l('Allow change order state to module custom generated states, when label is generated.'),
+                ),
             ),
             'warehouses' => array(
                 array(
@@ -586,6 +647,7 @@ class Pakettikauppa extends CarrierModule
         if (((bool)Tools::isSubmit('submitPakettikauppaShippingLabels')) == true) {
             Configuration::updateValue('PAKETTIKAUPPA_SHIPPING_STATE', Tools::getValue('shipping_state'));
             Configuration::updateValue('PAKETTIKAUPPA_LABEL_COMMENT', Tools::getValue('label_comment'));
+            Configuration::updateValue('PAKETTIKAUPPA_USE_CUSTOM_STATES', Tools::getValue('use_custom_states'));
             
             $this->context->cookie->__set('success_msg', $this->l('Labels settings saved successfully'));
         }
@@ -943,14 +1005,13 @@ class Pakettikauppa extends CarrierModule
 
         if ($check_state == $params['newOrderStatus']->id) {
             $shipment = $this->core->label->generate_shipment($params['id_order']);
-            //if ($shipment['status'] === 'success') {}
             //$this->core->label->generate_label_pdf($params['id_order']); //Or generate and open PDF
         }
     }
 
     public function hookSendMailAlterTemplateVars($params) //Add template variables for PS 1.7
     {
-        if (empty($params['cart']->id)) {
+        if (empty($params['cart']->id) || empty($params['cart']->id_carrier)) {
             return;
         }
 
@@ -961,7 +1022,7 @@ class Pakettikauppa extends CarrierModule
                 'id_cart' => $params['cart']->id,
             ),
         ));
-        if (empty($pakketikauppa_order)) {
+        if (empty($pakketikauppa_order) || empty($pakketikauppa_order['track_number'])) {
             return;
         }
 
@@ -991,7 +1052,7 @@ class Pakettikauppa extends CarrierModule
             return;
         }
 
-        if (empty($params['cart']->id)) {
+        if (empty($params['cart']->id) || empty($params['cart']->id_carrier)) {
             return;
         }
 
@@ -1002,7 +1063,7 @@ class Pakettikauppa extends CarrierModule
                 'id_cart' => $params['cart']->id,
             ),
         ));
-        if (empty($pakketikauppa_order)) {
+        if (empty($pakketikauppa_order) || empty($pakketikauppa_order['track_number'])) {
             return;
         }
 
@@ -1028,7 +1089,8 @@ class Pakettikauppa extends CarrierModule
     public function hookDisplayAdminOrder($id_order)
     {
         $template = 'hook-admin_order.tpl';
-        $critical_error = '';
+        $critical_errors = array();
+        $warning_errors = array();
         $pickup_points = array();
         $selected_point = '';
         $shipping_labels = array();
@@ -1078,18 +1140,23 @@ class Pakettikauppa extends CarrierModule
                     $selected_point = json_decode($client->getPickupPointInfo($pakketikauppa_order['pickup_point_id'], $pakketikauppa_carrier['method_code']));
                     $pickup_points = $client->searchPickupPoints($address->postcode, null, $country_iso, $pakketikauppa_carrier['method_code'], 100);
                 } catch (Exception $ex) {
-                    $critical_error = $this->l('Error from Pakettikauppa server') . ': ' . $ex->getMessage();
+                    $critical_errors[] = $this->l('Error from Pakettikauppa server') . ': ' . $ex->getMessage();
                     $selected_point = '';
                     $pickup_points = array();
                 }
             }
+
+            if ($is_cod && !isset($additional_services['3101'])) {
+                $warning_errors[] = $this->l('In the order is selected the Cash on Delivery (COD) payment method, but the selected shipping method does not support this service.') . '<br/><b>' . $this->l('The COD service will not be added to the generated label!') . '</b>';
+            }
         } else {
-            $critical_error = $this->l('Pakettikauppa order information was not found');
+            $critical_errors[] = $this->l('Pakettikauppa order information was not found');
         }
 
         $this->context->smarty->assign(array(
             'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_order',
-            'critical_error' => $critical_error,
+            'critical_errors' => $critical_errors,
+            'warning_errors' => $warning_errors,
             'method_name' => $carrier->name,
             'pickup_points' => $pickup_points,
             'selected_pickup_point' => $selected_point,
