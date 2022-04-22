@@ -74,7 +74,6 @@ class AdminPakettikauppaController extends ModuleAdminController
         $this->simple_header = false;
 
         $this->context = Context::getContext();
-        date_default_timezone_set("Asia/Calcutta");
 
         $this->_select = "o.id_order,
             concat(c.firstname,' ',c.lastname) as customer_name,
