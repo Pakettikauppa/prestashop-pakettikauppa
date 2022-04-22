@@ -8,21 +8,39 @@ if (!defined('_PS_VERSION_')) {
 if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
   class Sql
   {
-    public $core = null;
-    
-    public $table_main = _DB_PREFIX_ . 'pakettikauppa';
-    public $table_methods = _DB_PREFIX_ . 'pakettikauppa_methods';
+    private $core = null;
 
     public function __construct(Core $module)
     {
       $this->core = $module;
     }
 
+    public function get_table_name($key, $db_prefix = _DB_PREFIX_)
+    {
+      $module_table_prefix = $db_prefix . $this->core->configs->module_name . '_';
+      
+      switch ($key) {
+        case 'orders':
+          $table_name = $module_table_prefix . 'orders';
+          break;
+        case 'methods':
+          $table_name = $module_table_prefix . 'methods';
+          break;
+        case 'products':
+          $table_name = $module_table_prefix . 'products';
+          break;
+        default:
+          $table_name = $key;
+      }
+
+      return $table_name;
+    }
+
     public function install()
     {
       $sql = array();
 
-      $sql[] = 'CREATE TABLE IF NOT EXISTS `' . $this->table_main . '` (
+      $sql[] = 'CREATE TABLE IF NOT EXISTS `' . $this->get_table_name('orders') . '` (
         `id` int(11) NOT NULL AUTO_INCREMENT COMMENT "ID in this table",
         `id_cart` int(10) unsigned NOT NULL COMMENT "Prestashop cart ID",
         `id_carrier` int(11) NOT NULL COMMENT "Prestashop carrier ID",
@@ -32,17 +50,26 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
         `additional_services` text NOT NULL COMMENT "Additional services for this shipment",
         PRIMARY KEY (`id`),
         UNIQUE (`id_cart`)
-      ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21;';
+      ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8;';
 
-      $sql[] = 'CREATE TABLE IF NOT EXISTS `' . $this->table_methods . '` (
+      $sql[] = 'CREATE TABLE IF NOT EXISTS `' . $this->get_table_name('methods') . '` (
         `id` int(11) NOT NULL AUTO_INCREMENT COMMENT "ID in this table",
         `id_carrier_reference` int(11) NOT NULL COMMENT "Prestashop carrier reference ID",
         `method_code` int(10) NOT NULL COMMENT "Pakettikauppa method code",
         `has_pp` int(1) NOT NULL DEFAULT "0" COMMENT "Method has pickup points",
+        `countries` text COMMENT "Countries for which this shipping method is available",
         `services` text COMMENT "This shipping method services",
         PRIMARY KEY (`id`),
         UNIQUE (`id_carrier_reference`)
-      ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21;';
+      ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8;';
+
+      $sql[] = 'CREATE TABLE IF NOT EXISTS `' . $this->get_table_name('products') . '` (
+        `id` int(11) NOT NULL AUTO_INCREMENT COMMENT "ID in this table",
+        `id_product` int(11) unsigned NOT NULL COMMENT "Prestashop product ID",
+        `params` text COMMENT "Parameters for product",
+        PRIMARY KEY (`id`),
+        UNIQUE (`id_product`)
+      ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8;';
 
       foreach ($sql as $query) {
         if ($this->exec_query($query) == false) {
@@ -194,22 +221,6 @@ if ( ! class_exists(__NAMESPACE__ . '\Sql') ) {
     public function get_by_query($sql_query)
     {
       return \DB::getInstance()->ExecuteS($sql_query);
-    }
-
-    private function get_table_name($key)
-    {
-      switch ($key) {
-        case 'main':
-          $table_name = $this->table_main;
-          break;
-        case 'methods':
-          $table_name = $this->table_methods;
-          break;
-        default:
-          $table_name = $key;
-      }
-
-      return $table_name;
     }
 
     private function get_query_where($values, $condition = 'AND')

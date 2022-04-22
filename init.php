@@ -13,10 +13,25 @@ if ( ! class_exists('PS_Pakettikauppa') ) {
   class PS_Pakettikauppa extends PS_Pakettikauppa_Core\Core {
     public function __construct($configs = array())
     {
-      $all_configs = array_merge_recursive(array(
+      $required_configs = array(
         'module_dir' => dirname(__FILE__),
-      ), $configs);
-      parent::__construct($all_configs);
+        'module_name' => 'pakettikauppa',
+        'translates' => array(),
+      );
+
+      foreach ($required_configs as $req_config_key => $req_config_value) {
+        if (!isset($configs[$req_config_key])) {
+          $configs[$req_config_key] = $req_config_value;
+        }
+        if (is_array($req_config_value)) {
+          foreach ($req_config_value as $element_key => $element_value) {
+            if (!isset($configs[$req_config_key][$element_key])) {
+              $configs[$req_config_key][$element_key] = $element_value;
+            }
+          }
+        }
+      }
+      parent::__construct($configs);
     }
   }
 }

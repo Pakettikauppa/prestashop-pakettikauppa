@@ -8,8 +8,8 @@ if (!defined('_PS_VERSION_')) {
 if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
   class Label
   {
-    public $core = null;
-    public $trans = array();
+    private $core = null;
+    private $trans = array();
 
     public function __construct(Core $module)
     {
@@ -29,7 +29,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $custom_state_error = \Configuration::get('PAKETTIKAUPPA_CUSTOM_STATE_ERROR');
 
       $ship_detail = $this->core->sql->get_single_row(array(
-        'table' => 'main',
+        'table' => 'orders',
         'get_values' => array(
           'point' => 'pickup_point_id',
           'method' => 'method_code',
@@ -64,7 +64,6 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
 
       /*** START Additional services ***/
       $all_additional_services = $this->core->api->get_additional_services($ship_detail['method']);
-      $external_registered_services = array();
       $additional_services = array();
 
       $selected_services = (!empty($ship_detail['services'])) ? unserialize($ship_detail['services']) : array();
@@ -72,44 +71,46 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         $selected_services = array();
       }
 
-      /* 2106 - Pickup points */
+      /* Pickup points */
       if (!empty($ship_detail['point'])) {
-        $additional_services['2106']['pickup_point_id'] = $ship_detail['point'];
-      }
-      $external_registered_services[] = '2106';
-
-      /* 3101 - COD */
-      $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
-      if (!empty($cod_modules) && isset($all_additional_services['3101'])) {
-        foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
-          if (in_array($module['id_module'], $cod_modules)) {
-            if ($module['name'] === $order->module) {
-              $bank_account_number = \Configuration::get('PAKETTIKAUPPA_BANK_ACCOUNT');
-              if (!empty($bank_account_number)) {
-                $bank_account_number = chunk_split(str_replace(' ', '', $bank_account_number), 4, ' '); //Remove spaces and add space after every 4th character
-              }
-              $additional_services['3101'] = array(
-                'amount' => \Tools::ps_round($order->getOrdersTotalPaid(), 2),
-                'account' => $bank_account_number,
-                'reference' => \Configuration::get('PAKETTIKAUPPA_BANK_REFERENCE'),
-                'codbic' => \Configuration::get('PAKETTIKAUPPA_BANK_BIC'),
-              );
-              break;
-            }
+        $service = $this->core->services->get_service_params($ship_detail['method'], 'pickup_point', array( 'pickup_point' => $ship_detail['point'] ));
+        foreach ($service['params'] as $service_param_key => $service_param_value) {
+          if (in_array($service['service'], $selected_services)) {
+            $additional_services[$service['service']][$service_param_key] = $service_param_value;
           }
         }
       }
-      $external_registered_services[] = '3101';
 
-      /* 3102 - Multiple shipments */
+      /* COD */
+      $service = $this->core->services->get_service_params($ship_detail['method'], 'cod', array( 'payment_module' => $order->module, 'amount' => $order->getOrdersTotalPaid() ));
+      foreach ($service['params'] as $service_param_key => $service_param_value) {
+        if (in_array($service['service'], $selected_services)) {
+          $additional_services[$service['service']][$service_param_key] = $service_param_value;
+        }
+      }
+
+      /* Multiple shipments */
       $total_shipments = 1; //TODO: Make to work
       if ($total_shipments > 1) {
-        $additional_services['3102']['count'] = $total_shipments;
+        $service = $this->core->services->get_service_params($ship_detail['method'], 'multiple', array( 'count' => $total_shipments ));
+        foreach ($service['params'] as $service_param_key => $service_param_value) {
+          if (in_array($service['service'], $selected_services)) {
+            $additional_services[$service['service']][$service_param_key] = $service_param_value;
+          }
+        }
       }
-      $external_registered_services[] = '3102';
+
+      /* Dangerous goods */
+      $service = $this->core->services->get_service_params($ship_detail['method'], 'dangerous', array( 'order' => $order ));
+      foreach ($service['params'] as $service_param_key => $service_param_value) {
+        if (in_array($service['service'], $selected_services)) {
+          $additional_services[$service['service']][$service_param_key] = $service_param_value;
+        }
+      }
       
+      /* Add other services */
       foreach ($all_additional_services as $service_code => $service_params) {
-        if (in_array($service_code, $external_registered_services)) {
+        if (isset($additional_services[$service_code])) {
           continue;
         }
         if (in_array($service_code, $selected_services)) {
@@ -311,7 +312,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
     public function save_tracking_number_to_db($id_cart, $tracking_number)
     {
       $this->core->sql->update_row(array(
-        'table' => 'main',
+        'table' => 'orders',
         'update' => array(
           'track_number' => $tracking_number,
         ),
@@ -324,7 +325,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
     public function get_tracking_number_from_db($id_cart)
     {
       $result = $this->core->sql->get_single_row(array(
-        'table' => 'main',
+        'table' => 'orders',
         'get_values' => array('tracking_number' => 'track_number'),
         'where' => array(
           'id_cart' => $id_cart,

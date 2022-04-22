@@ -10,7 +10,7 @@
         {assign var=have_param value=false}
         {if $code == 3101}
           {if $payment_is_cod}
-            {assign var=disabled value=true}
+            {*assign var=disabled value=true*} {* Disabled, because not needed this *}
           {/if}
           {*assign var=have_param value=true*} {* Disabled, because there is no option to save param value *}
         {/if}

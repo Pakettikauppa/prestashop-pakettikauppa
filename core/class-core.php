@@ -17,12 +17,13 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
     public $api;
     public $carrier;
     public $label;
+    public $services;
 
     public function __construct($configs = array())
     {    
       self::$instance = $this;
 
-      date_default_timezone_set(\Configuration::get('PS_TIMEZONE')); //Fix time zone in module classes
+      date_default_timezone_set(\Configuration::get('PS_TIMEZONE')); //Fixing time zone in module classes
 
       $this->configs = $this->get_configs($configs);
       //Load classes
@@ -30,9 +31,11 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
       $this->api = $this->load_api_class();
       $this->carrier = $this->load_carrier_class();
       $this->label = $this->load_label_class();
+      $this->services = $this->load_services_class();
     }
 
-    public static function get_instance() {
+    public static function get_instance()
+    {
       return self::$instance;
     }
 
@@ -40,6 +43,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
     {
       $default = array(
         'module_dir' => _PS_MODULE_DIR_ . 'pakettikauppa',
+        'module_name' => 'pakettikauppa',
         'translates' => array(),
       );
 
@@ -82,6 +86,15 @@ if ( ! class_exists(__NAMESPACE__ . '\Core') ) {
       require_once($this->configs->module_dir . '/core/class-label.php');
 
       $class = new Label($this);
+
+      return $class;
+    }
+
+    protected function load_services_class()
+    {
+      require_once($this->configs->module_dir . '/core/class-additional_services.php');
+
+      $class = new AdditionalServices($this);
 
       return $class;
     }

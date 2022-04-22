@@ -38,9 +38,11 @@ class Pakettikauppa extends CarrierModule
         'actionAdminControllerSetMedia',
         'actionEmailAddAfterContent',
         'actionOrderStatusPostUpdate',
+        'actionProductUpdate',
         'actionValidateOrder',
         'backOfficeHeader',
         'displayAdminOrder',
+        'displayAdminProductsExtra',
         'displayCarrierExtraContent',
         'displayCarrierList',
         'header',
@@ -70,6 +72,8 @@ class Pakettikauppa extends CarrierModule
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
         $this->core = new PS_Pakettikauppa(array(
+            'module_dir' => _PS_MODULE_DIR_ . $this->name,
+            'module_name' => $this->name,
             'translates' => array(
                 'error_order_object' => $this->l('Cant load Order object'),
                 'error_ship_not_found' => $this->l('Shipment information not found'),
@@ -911,7 +915,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $current_values = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(
                 'point' => 'pickup_point_id',
                 'method' => 'method_code',
@@ -923,7 +927,7 @@ class Pakettikauppa extends CarrierModule
 
         if (!$current_values) {
             $this->core->sql->insert_row(array(
-                'table' => 'main',
+                'table' => 'orders',
                 'values' => array(
                     'id_cart' => $params['cart']->id,
                     'id_carrier' => $id_carrier,
@@ -943,7 +947,7 @@ class Pakettikauppa extends CarrierModule
             } else {
                 if ($version == '16') {
                     $this->core->sql->update_row(array(
-                        'table' => 'main',
+                        'table' => 'orders',
                         'update' => array(
                             'pickup_point_id' => $pickup_point_id,
                         ),
@@ -958,7 +962,7 @@ class Pakettikauppa extends CarrierModule
                     $pickup_point_id = $pickup_points[0]->pickup_point_id;
                     if ($current_values['method'] === $selected_method['code']) {
                         $this->core->sql->update_row(array(
-                            'table' => 'main',
+                            'table' => 'orders',
                             'update' => array(
                                 'pickup_point_id' => $pickup_point_id,
                             ),
@@ -973,7 +977,7 @@ class Pakettikauppa extends CarrierModule
 
         if ($current_values['method'] != $selected_method['code'] && $version == '16') {
             $this->core->sql->update_row(array(
-                'table' => 'main',
+                'table' => 'orders',
                 'update' => array(
                     'id_carrier' => $id_carrier,
                     'method_code' => $selected_method['code'],
@@ -1019,7 +1023,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $pakketikauppa_order = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(),
             'where' => array(
                 'id_cart' => $params['cart']->id,
@@ -1060,7 +1064,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $pakketikauppa_order = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(),
             'where' => array(
                 'id_cart' => $params['cart']->id,
@@ -1118,7 +1122,7 @@ class Pakettikauppa extends CarrierModule
         }
 
         $pakketikauppa_order = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(),
             'where' => array(
                 'id_cart' => $order->id_cart,
@@ -1181,6 +1185,141 @@ class Pakettikauppa extends CarrierModule
         return $output;
     }
 
+    public function hookDisplayAdminProductsShippingStepBottom($params) { //TODO: Maybe not need. Still not added to the hooks list
+      //Product id: $params['id_product']
+      /*$template = 'hook-admin_product-shipping.tpl';
+      
+      $fields = array(
+        'dangerous' => array(
+          'title' => $this->l('Dangerous goods'),
+          'help' => $this->l('Content of hazardous substances in the product'),
+          'fields' => array(
+            array(
+              'type' => 'number',
+              'key' => 'pk_dangerous_weight',
+              'label' => $this->l('Weight'),
+              'value' => 0,
+              'prepend' => '',
+              'append' => $this->l('kg'),
+              'width' => 2,
+            ),
+          ),
+        ),
+      );
+
+      $this->context->smarty->assign(array(
+        'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_product',
+        'tab_step' => 4,
+        'fields' => $fields,
+      ));
+
+      $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/' . $template);
+      //return '<pre>'.print_r(get_object_vars($params['request']->attributes),true).'</pre>';
+      //return '<pre>'.print_r(array_keys((array)$params['request']->attributes),true).'</pre>';
+      return '<pre>'.print_r(array_keys($params),true).'</pre>';
+      return $output;*/
+    }
+
+    public function hookDisplayAdminProductsExtra($params) {
+        if (isset($params['id_product'])) {
+            $id_product = (int) $params['id_product'];
+        } else {
+            $id_product = (int) Tools::getValue('id_product');
+        }
+
+        $template = 'page-admin_product.tpl';
+
+        $product_params = array();
+        $sql_product = $this->core->sql->get_single_row(array(
+            'table' => 'products',
+            'get_values' => array('params'),
+            'where' => array(
+                'id_product' => $id_product,
+            ),
+        ));
+        if (!empty($sql_product['params'])) {
+            $product_params = unserialize($sql_product['params']);
+        }
+
+        $fields = array(
+            'dangerous' => array(
+                'title' => $this->l('Dangerous goods'),
+                'help' => $this->l('Content of hazardous substances in the product'),
+                'fields' => array(
+                    array(
+                        'type' => 'number',
+                        'key' => 'lqweight',
+                        'label' => $this->l('Weight'),
+                        'value' => (isset($product_params['lqweight'])) ? $product_params['lqweight'] : 0,
+                        'prepend' => '',
+                        'append' => $this->l('kg'),
+                        'width' => 2,
+                        'step' => 0.001,
+                        'min' => 0,
+                        'max' => '',
+                    ),
+                ),
+            ),
+        );
+
+        $this->context->smarty->assign(array(
+            'template_parts_path' => $this->local_path . 'views/templates/admin/parts/admin_product',
+            'module_name' => $this->name,
+            'all_sections' => $fields,
+        ));
+
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/' . $template);
+        
+        return $output;
+    }
+
+    public function hookActionProductUpdate($params) {
+        if (empty($params['id_product'])) {
+            return;
+        }
+
+        $module_fields = Tools::getValue($this->name);
+
+        $sql_product = $this->core->sql->get_single_row(array(
+            'table' => 'products',
+            'get_values' => array('params'),
+            'where' => array(
+                'id_product' => $params['id_product'],
+            ),
+        ));
+
+        if (empty($sql_product)) {
+            $this->core->sql->insert_row(array(
+                'table' => 'products',
+                'values' => array(
+                    'id_product' => $params['id_product'],
+                    'params' => serialize($module_fields),
+                ),
+            ));
+
+            return;
+        }
+
+        $product_params = unserialize($sql_product['params']);
+        if (!is_array($product_params)) {
+            $product_params = array();
+        }
+
+        foreach ($module_fields as $param_key => $param_value) {
+            $product_params[$param_key] = $param_value;
+        }
+
+        $this->core->sql->update_row(array(
+            'table' => 'products',
+            'update' => array(
+                'params' => (!empty($product_params)) ? serialize($product_params) : '',
+            ),
+            'where' => array(
+                'id_product' => $params['id_product'],
+            ),
+        ));
+    }
+
     private function is_cod($payment_module_name) {
         $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
         if (!empty($cod_modules)) {
@@ -1197,7 +1336,7 @@ class Pakettikauppa extends CarrierModule
 
     private function get_selected_additional_services($cart_id, $is_cod = false) {
         $sql_selected_services = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array('additional_services'),
             'where' => array(
                 'id_cart' => $cart_id,
@@ -1210,7 +1349,7 @@ class Pakettikauppa extends CarrierModule
         
         if ($is_cod && !in_array('3101', $selected_services)) {
             $this->core->sql->update_row(array(
-                'table' => 'main',
+                'table' => 'orders',
                 'update' => array(
                     'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
                 ),

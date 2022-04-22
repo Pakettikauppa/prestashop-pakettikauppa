@@ -8,7 +8,7 @@ if (!defined('_PS_VERSION_')) {
 if ( ! class_exists(__NAMESPACE__ . '\Carrier') ) {
   class Carrier
   {
-    public $core = null;
+    private $core = null;
 
     public function __construct(Core $module)
     {
@@ -27,13 +27,23 @@ if ( ! class_exists(__NAMESPACE__ . '\Carrier') ) {
         return false;
       }
 
+      $services = array();
+      if (!empty($shipping_method->additional_services)) {
+        foreach ($shipping_method->additional_services as $service) {
+          if (!empty($service->service_code)) {
+            $services[] = $service->service_code;
+          }
+        }
+      }
+
       $this->core->sql->insert_row(array(
         'table' => 'methods',
         'values' => array(
           'id_carrier_reference' => $carrier_reference,
           'method_code' => $shipping_method->shipping_method_code,
           'has_pp' => (!empty($shipping_method->has_pickup_points)) ? $shipping_method->has_pickup_points : 0,
-          //TODO: Make additional services save to column 'services'
+          'countries' => implode(',', $shipping_method->supported_countries),
+          'services' => implode(',', $services),
         ),
         'on_duplicate' => array(
           'method_code' => $shipping_method->shipping_method_code,

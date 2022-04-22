@@ -47,7 +47,7 @@ switch (Tools::getValue('action')) {
         $cart = Context::getContext()->cart;
 
         $selected_method = $class_pakettikauppa->sql->get_single_row(array(
-          'table' => 'main',
+          'table' => 'orders',
           'get_values' => array(
             'code' => 'method_code',
           ),
@@ -57,7 +57,7 @@ switch (Tools::getValue('action')) {
         ));
 
         $current_values = $class_pakettikauppa->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(
                 'point' => 'pickup_point_id',
                 'method' => 'method_code',
@@ -90,7 +90,7 @@ switch (Tools::getValue('action')) {
         $selected_pickup_point = (Tools::getValue('id_pickup') !== "") ? Tools::getValue('id_pickup') : 0;
         if (!empty($check_method)) {
             $result = $class_pakettikauppa->sql->insert_row(array(
-                'table' => 'main',
+                'table' => 'orders',
                 'values' => array(
                     'id_cart' => Tools::getValue('id_cart'),
                     'pickup_point_id' => $selected_pickup_point,
@@ -117,7 +117,7 @@ switch (Tools::getValue('action')) {
         $selected_services = Tools::getValue('selected_services');
 
         $result = $class_pakettikauppa->sql->update_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'update' => array(
                 'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
             ),
@@ -135,7 +135,7 @@ switch (Tools::getValue('action')) {
         }
 
         $pakketikauppa_order = $class_pakettikauppa->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(),
             'where' => array(
                 'id_cart' => Tools::getValue('id_cart'),
@@ -148,7 +148,7 @@ switch (Tools::getValue('action')) {
         $selected_services = Tools::getValue('additional_services');
 
         $result = $class_pakettikauppa->sql->update_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'update' => array(
                 'pickup_point_id' => (!empty(Tools::getValue('new_pickup_point'))) ? Tools::getValue('new_pickup_point') : $pakketikauppa_order['pickup_point_id'],
                 'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
@@ -169,7 +169,7 @@ switch (Tools::getValue('action')) {
         }
 
         $pakketikauppa_order = $class_pakettikauppa->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array(),
             'where' => array(
                 'id_cart' => Tools::getValue('id_cart'),
@@ -192,7 +192,6 @@ switch (Tools::getValue('action')) {
         $id_order = (int)$id_order['id_order'];
 
         $class_pakettikauppa->label->generate_label_pdf($id_order, true);
-//TODO: Padaryti, jog neleistu serviso, jeigu jo nepalaiko (neaišku ar galima taip)
         break;
     default:
         echo 'Action not exists';

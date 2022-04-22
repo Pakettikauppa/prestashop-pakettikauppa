@@ -34,3 +34,4 @@
 - fixed additional service usage according to delivery method
 - added variables to emails
 - added custom Pakettikauppa order states
+- fixed additional service params set
