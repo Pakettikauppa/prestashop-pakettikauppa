@@ -1103,6 +1103,7 @@ class Pakettikauppa extends CarrierModule
         $shipping_labels = array();
         $additional_services = array();
         $selected_services = array();
+        $dangerous_goods = array('weight' => 0, 'count' => 0);
 
         $order = new Order((int)$id_order['id_order']);
         $carrier = new Carrier($order->id_carrier);
@@ -1156,6 +1157,8 @@ class Pakettikauppa extends CarrierModule
             if ($is_cod && !isset($additional_services['3101'])) {
                 $warning_errors[] = $this->l('In the order is selected the Cash on Delivery (COD) payment method, but the selected shipping method does not support this service.') . '<br/><b>' . $this->l('The COD service will not be added to the generated label!') . '</b>';
             }
+
+            $dangerous_goods = $this->core->services->get_order_dangerous_goods($order);
         } else {
             $critical_errors[] = $this->l('Pakettikauppa order information was not found');
         }
@@ -1178,6 +1181,8 @@ class Pakettikauppa extends CarrierModule
             'payment_is_cod' => $is_cod,
             'order_amount' => Tools::ps_round($order->getOrdersTotalPaid(), 2),
             'currency' =>  $this->context->currency,
+            'dangerous_goods' => $dangerous_goods,
+            'weight_unit' => $this->l('kg'),
         ));
 
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/' . $template);
