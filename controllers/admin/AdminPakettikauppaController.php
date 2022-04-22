@@ -33,20 +33,7 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function __construct()
     {
-        $this->bootstrap = true;
-        $this->table = 'pakettikauppa';
-        $this->allow_export = true;
-        $this->_defaultOrderBy = 'id';
-        $this->_defaultOrderWay = 'DESC';
-        $this->list_no_link = true;
-        $this->addRowAction('Pdf');
-        $this->identifier = 'id_cart';
-        $this->simple_header = false;
-
         parent::__construct();
-
-        $this->context = Context::getContext();
-        date_default_timezone_set("Asia/Calcutta");
 
         $this->core = new PS_Pakettikauppa(array(
             'translates' => array(
@@ -75,6 +62,18 @@ class AdminPakettikauppaController extends ModuleAdminController
                 //'9904' => $this->l(''),
             ),
         ));
+
+        $this->bootstrap = true;
+        $this->table = $this->core->sql->get_table_name('orders', '');
+        $this->allow_export = true;
+        $this->_defaultOrderBy = 'id';
+        $this->_defaultOrderWay = 'DESC';
+        $this->list_no_link = true;
+        $this->addRowAction('Pdf');
+        $this->identifier = 'id_cart';
+        $this->simple_header = false;
+
+        $this->context = Context::getContext();
 
         $this->_select = "o.id_order,
             concat(c.firstname,' ',c.lastname) as customer_name,
@@ -219,7 +218,7 @@ class AdminPakettikauppaController extends ModuleAdminController
     public function getPickupName($id_cart, $tr)
     {
         $method = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'where' => array(
                 'id_cart' => $id_cart
             ),
@@ -253,23 +252,15 @@ class AdminPakettikauppaController extends ModuleAdminController
     {
         $order = (isset($row_data['id_order'])) ? new \Order((int)$row_data['id_order']) : '';
 
-        $is_cod = false;
-        $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
-        if (!empty($order) && !empty($cod_modules)) {
-            foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
-                if (in_array($module['id_module'], $cod_modules)) {
-                    if ($module['name'] === $order->module) {
-                        $is_cod = true;
-                    }
-                }
-            }
+        if (empty($order)) {
+          return $this->l('Error');
         }
 
         $additional_services = $this->core->api->get_additional_services($row_data['method_code']);
         $selected_services_text = '';
 
         $sql_selected_services = $this->core->sql->get_single_row(array(
-            'table' => 'main',
+            'table' => 'orders',
             'get_values' => array('additional_services'),
             'where' => array(
                 'id_cart' => $cart_id,
@@ -280,17 +271,18 @@ class AdminPakettikauppaController extends ModuleAdminController
             $selected_services = array();
         }
 
-        if ($is_cod && !in_array('3101', $selected_services) && isset($additional_services['3101'])) {
-            $selected_services[] = '3101';
-            $this->core->sql->update_row(array(
-                'table' => 'main',
-                'update' => array(
-                    'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
-                ),
-                'where' => array(
-                    'id_cart' => $cart_id,
-                ),
-            ));
+        $is_cod = $this->core->services->payment_is_cod($order->module);
+        if ($is_cod) {
+            if ($this->core->services->add_service_to_order($cart_id, '3101')) {
+                $selected_services[] = '3101';
+            }
+        }
+        
+        $dangerous_goods = $this->core->services->get_order_dangerous_goods($order);
+        if (!empty($dangerous_goods['weight'])) {
+            if ($this->core->services->add_service_to_order($cart_id, '3143')) {
+                $selected_services[] = '3143';
+            }
         }
 
         foreach ($selected_services as $service_code) {

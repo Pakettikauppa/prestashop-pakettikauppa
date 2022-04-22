@@ -8,7 +8,7 @@ if (!defined('_PS_VERSION_')) {
 if ( ! class_exists(__NAMESPACE__ . '\Api') ) {
   class Api
   {
-    public $core = null;
+    private $core = null;
 
     public function __construct(Core $module)
     {
@@ -34,7 +34,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Api') ) {
       return $pickup_point;
     }
 
-    public function get_additional_services($shipping_method = false)
+    public function get_additional_services($shipping_method = false, $use_exclude = true)
     {
       $additional_services = array();
       $exclude_services = array('2106');
@@ -47,7 +47,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Api') ) {
       }
 
       foreach ($all_additional_services as $service) {
-        if (in_array($service->service_code, $exclude_services)) {
+        if ($use_exclude && in_array($service->service_code, $exclude_services)) {
           continue;
         }
         if ($shipping_method && $service->shipping_method_code != $shipping_method) {

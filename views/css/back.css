@@ -114,6 +114,10 @@
   font-weight: unset;
   margin: unset;
 }
+.pakettikauppa.block_in_order .pk-row-services .service_info {
+  font-style: italic;
+  opacity: 0.5;
+}
 .pakettikauppa.block_in_order .pk-row-services .service_param input {
   display: inline-block;
 }
