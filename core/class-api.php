@@ -34,7 +34,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Api') ) {
       return $pickup_point;
     }
 
-    public function get_additional_services($shipping_method = false, $use_exclude = true)
+    public function get_additional_services($shipping_method = false, $allow_exclude = true)
     {
       $additional_services = array();
       $exclude_services = array('2106');
@@ -47,7 +47,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Api') ) {
       }
 
       foreach ($all_additional_services as $service) {
-        if ($use_exclude && in_array($service->service_code, $exclude_services)) {
+        if ($allow_exclude && in_array($service->service_code, $exclude_services)) {
           continue;
         }
         if ($shipping_method && $service->shipping_method_code != $shipping_method) {
