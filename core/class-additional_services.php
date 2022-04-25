@@ -15,6 +15,41 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       $this->core = $module;
     }
 
+    public function get_order_services($id_cart, $sql_data = false)
+    {
+      if (empty($sql_data)) {
+        $sql_selected_services = $this->core->sql->get_single_row(array(
+          'table' => 'orders',
+          'get_values' => array('additional_services'),
+          'where' => array(
+            'id_cart' => $id_cart,
+          ),
+        ));
+      } else {
+        $sql_selected_services = $sql_data;
+      }
+
+      $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
+      if (empty($selected_services)) { //If unserialize return false
+        $selected_services = array();
+      }
+
+      return $selected_services;
+    }
+
+    public function save_order_services($id_cart, $selected_services)
+    {
+      $this->core->sql->update_row(array(
+        'table' => 'orders',
+        'update' => array(
+          'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
+        ),
+        'where' => array(
+          'id_cart' => $id_cart,
+        ),
+      ));
+    }
+
     public function add_service_to_order($id_cart, $service_code)
     {
       if (empty($id_cart) || empty($service_code)) {
@@ -30,24 +65,11 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       ));
 
       $available_services = $this->core->api->get_additional_services($sql_selected_services['method_code']);
-
-      $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
-
-      if (empty($selected_services)) { //If unserialize returned false
-        $selected_services = array();
-      }
+      $selected_services = $this->get_order_services($id_cart, $sql_selected_services['additional_services']);
 
       if (!in_array($service_code, $selected_services) && isset($available_services[$service_code])) {
         $selected_services[] = $service_code;
-        $this->core->sql->update_row(array(
-          'table' => 'orders',
-          'update' => array(
-            'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
-          ),
-          'where' => array(
-            'id_cart' => $id_cart,
-          ),
-        ));
+        $this->save_order_services($id_cart, $selected_services);
 
         return true;
       }
@@ -87,19 +109,18 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
 
     public function payment_is_cod($payment_module_name)
     {
-      $is_cod = false;
       $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
       if (!empty($payment_module_name) && !empty($cod_modules)) {
           foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
               if (in_array($module['id_module'], $cod_modules)) {
                   if ($module['name'] === $payment_module_name) {
-                      $is_cod = true;
+                      return true;
                   }
               }
           }
       }
 
-      return $is_cod;
+      return false;
     }
 
     public function get_available_services($method_code)
@@ -112,6 +133,22 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       return false;
     }
 
+    public function get_service_code($service_key)
+    {
+      $associations = array(
+        'pickup_point' => '2106',
+        'cod' => '3101',
+        'multiple' => '3102',
+        'dangerous' => '3143',
+      );
+
+      if (isset($associations[$service_key])) {
+        return $associations[$service_key];
+      }
+
+      return $service_key;
+    }
+
     public function get_service_params($method_code, $service_code, $required_data)
     {
       $service_params = array(
@@ -119,15 +156,7 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
         'params' => array(),
       );
 
-      $associations = array( //If service code not using in outside
-        'pickup_point' => '2106',
-        'cod' => '3101',
-        'multiple' => '3102',
-        'dangerous' => '3143',
-      );
-      if (isset($associations[$service_code])) {
-        $service_code = $associations[$service_code];
-      }
+      $service_code = $this->get_service_code($service_code); //If got service association key
 
       $service_params['service'] = $service_code;
 
@@ -146,29 +175,25 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
 
       /**
        * 3101 - COD
-       * Required: payment_module, amount
+       * Required: amount
+       * Optional: check_payment (default: true), payment_module (required if check_payment is true)
        **/
-      if ($service_code == '3101' && !empty($required_data['payment_module'])) {
+      if ($service_code == '3101' && !empty($required_data['amount'])) {
+        $check_payment = (isset($required_data['check_payment'])) ? $required_data['check_payment'] : true;
         $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
-        if (!empty($cod_modules)) {
+        if ($check_payment && !empty($required_data['payment_module']) && !empty($cod_modules)) {
           foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
             if (in_array($module['id_module'], $cod_modules)) {
               if ($module['name'] === $required_data['payment_module']) {
-                $bank_account_number = \Configuration::get('PAKETTIKAUPPA_BANK_ACCOUNT');
-                if (!empty($bank_account_number)) {
-                  $bank_account_number = chunk_split(str_replace(' ', '', $bank_account_number), 4, ' '); //Remove spaces and add space after every 4th character
-                }
                 $amount = (!empty($required_data['amount'])) ? $required_data['amount'] : 0;
-                $service_params['params'] = array(
-                  'amount' => \Tools::ps_round($amount, 2),
-                  'account' => $bank_account_number,
-                  'reference' => \Configuration::get('PAKETTIKAUPPA_BANK_REFERENCE'),
-                  'codbic' => \Configuration::get('PAKETTIKAUPPA_BANK_BIC'),
-                );
+                $service_params['params'] = $this->get_cod_data($amount);
                 break;
               }
             }
           }
+        } else {
+          $amount = (!empty($required_data['amount'])) ? $required_data['amount'] : 0;
+          $service_params['params'] = $this->get_cod_data($amount);
         }
       }
 
@@ -193,6 +218,20 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       }
 
       return $service_params;
+    }
+
+    private function get_cod_data($amount)
+    {
+      $bank_account_number = \Configuration::get('PAKETTIKAUPPA_BANK_ACCOUNT');
+      if (!empty($bank_account_number)) {
+        $bank_account_number = chunk_split(str_replace(' ', '', $bank_account_number), 4, ' '); //Remove spaces and add space after every 4th character
+      }
+      return array(
+        'amount' => \Tools::ps_round($amount, 2),
+        'account' => $bank_account_number,
+        'reference' => \Configuration::get('PAKETTIKAUPPA_BANK_REFERENCE'),
+        'codbic' => \Configuration::get('PAKETTIKAUPPA_BANK_BIC'),
+      );
     }
   }
 }

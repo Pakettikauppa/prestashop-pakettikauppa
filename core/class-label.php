@@ -75,14 +75,12 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       if (!empty($ship_detail['point'])) {
         $service = $this->core->services->get_service_params($ship_detail['method'], 'pickup_point', array( 'pickup_point' => $ship_detail['point'] ));
         foreach ($service['params'] as $service_param_key => $service_param_value) {
-          if (in_array($service['service'], $selected_services)) {
-            $additional_services[$service['service']][$service_param_key] = $service_param_value;
-          }
+          $additional_services[$service['service']][$service_param_key] = $service_param_value;
         }
       }
 
       /* COD */
-      $service = $this->core->services->get_service_params($ship_detail['method'], 'cod', array( 'payment_module' => $order->module, 'amount' => $order->getOrdersTotalPaid() ));
+      $service = $this->core->services->get_service_params($ship_detail['method'], 'cod', array( 'payment_module' => $order->module, 'amount' => $order->getOrdersTotalPaid(), 'check_payment' => false ));
       foreach ($service['params'] as $service_param_key => $service_param_value) {
         if (in_array($service['service'], $selected_services)) {
           $additional_services[$service['service']][$service_param_key] = $service_param_value;

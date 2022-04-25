@@ -258,25 +258,9 @@ class AdminPakettikauppaController extends ModuleAdminController
 
         $additional_services = $this->core->api->get_additional_services($row_data['method_code']);
         $selected_services_text = '';
-
-        $sql_selected_services = $this->core->sql->get_single_row(array(
-            'table' => 'orders',
-            'get_values' => array('additional_services'),
-            'where' => array(
-                'id_cart' => $cart_id,
-            ),
-        ));
-        $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
-        if (empty($selected_services)) { //If unserialize return false
-            $selected_services = array();
-        }
+        $selected_services = $this->core->services->get_order_services($cart_id);
 
         $is_cod = $this->core->services->payment_is_cod($order->module);
-        if ($is_cod) {
-            if ($this->core->services->add_service_to_order($cart_id, '3101')) {
-                $selected_services[] = '3101';
-            }
-        }
         
         $dangerous_goods = $this->core->services->get_order_dangerous_goods($order);
         if (!empty($dangerous_goods['weight'])) {

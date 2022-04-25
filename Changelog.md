@@ -35,3 +35,4 @@
 - added variables to emails
 - added custom Pakettikauppa order states
 - fixed additional service params set
+- fixed additional services save in order

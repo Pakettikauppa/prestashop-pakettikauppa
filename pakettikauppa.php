@@ -1093,6 +1093,19 @@ class Pakettikauppa extends CarrierModule
         return $params;
     }
 
+    public function hookActionValidateOrder($params)
+    {
+        if (empty($params['order']->module) || empty($params['cart']->id)) {
+            return;
+        }
+
+        $is_cod = $this->core->services->payment_is_cod($params['order']->module);
+        
+        if ($is_cod) {
+            $this->core->services->add_service_to_order($params['cart']->id, $this->core->services->get_service_code('cod'));
+        }
+    }
+
     public function hookDisplayAdminOrder($id_order)
     {
         $template = 'hook-admin_order.tpl';
@@ -1108,7 +1121,7 @@ class Pakettikauppa extends CarrierModule
         $order = new Order((int)$id_order['id_order']);
         $carrier = new Carrier($order->id_carrier);
         
-        $is_cod = $this->is_cod($order->module);
+        $is_cod = $this->core->services->payment_is_cod($order->module);
 
         $pakketikauppa_carrier = $this->core->sql->get_single_row(array(
             'table' => 'methods',
@@ -1132,7 +1145,7 @@ class Pakettikauppa extends CarrierModule
 
         if (!empty($pakketikauppa_order)) {
             $additional_services = $this->core->api->get_additional_services($pakketikauppa_carrier['method_code']);
-            $selected_services = $this->get_selected_additional_services($order->id_cart, $is_cod);
+            $selected_services = $this->core->services->get_order_services($order->id_cart);
 
             if (!empty($pakketikauppa_order['track_number'])) {
                 $shipping_labels[] = $pakketikauppa_order['track_number'];
@@ -1323,48 +1336,5 @@ class Pakettikauppa extends CarrierModule
                 'id_product' => $params['id_product'],
             ),
         ));
-    }
-
-    private function is_cod($payment_module_name) {
-        $cod_modules = unserialize(\Configuration::get('PAKETTIKAUPPA_COD_MODULES'));
-        if (!empty($cod_modules)) {
-            foreach (\PaymentModule::getInstalledPaymentModules() as $module) {
-                if (in_array($module['id_module'], $cod_modules)) {
-                    if ($module['name'] === $payment_module_name) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private function get_selected_additional_services($cart_id, $is_cod = false) {
-        $sql_selected_services = $this->core->sql->get_single_row(array(
-            'table' => 'orders',
-            'get_values' => array('additional_services'),
-            'where' => array(
-                'id_cart' => $cart_id,
-            ),
-        ));
-        $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
-        if (empty($selected_services)) { //If unserialize return false
-            $selected_services = array();
-        }
-        
-        if ($is_cod && !in_array('3101', $selected_services)) {
-            $this->core->sql->update_row(array(
-                'table' => 'orders',
-                'update' => array(
-                    'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
-                ),
-                'where' => array(
-                    'id_cart' => $cart_id,
-                ),
-            ));
-            $selected_services[] = '3101';
-        }
-
-        return $selected_services;
     }
 }
