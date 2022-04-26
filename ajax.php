@@ -47,13 +47,13 @@ switch (Tools::getValue('action')) {
         $cart = Context::getContext()->cart;
 
         $selected_method = $class_pakettikauppa->sql->get_single_row(array(
-          'table' => 'orders',
-          'get_values' => array(
-            'code' => 'method_code',
-          ),
-          'where' => array(
-            'id_cart' => $cart->id,
-          ),
+            'table' => 'orders',
+            'get_values' => array(
+                'code' => 'method_code',
+            ),
+            'where' => array(
+                'id_cart' => $cart->id,
+            ),
         ));
 
         $current_values = $class_pakettikauppa->sql->get_single_row(array(
@@ -111,20 +111,15 @@ switch (Tools::getValue('action')) {
         break;
     case 'saveAddtionalService':
         if (empty(Tools::getValue('id_cart'))) {
-            die('Cart ID not received');
+            die('empty_cart_id');
         }
 
-        $selected_services = Tools::getValue('selected_services');
+        $selected_services = array();
+        foreach (Tools::getValue('selected_services') as $service_code) {
+            $selected_services[$service_code] = '';
+        }
 
-        $result = $class_pakettikauppa->sql->update_row(array(
-            'table' => 'orders',
-            'update' => array(
-                'additional_services' => (!empty($selected_services)) ? serialize($selected_services) : '',
-            ),
-            'where' => array(
-                'id_cart' => Tools::getValue('id_cart'),
-            ),
-        ));
+        $result = $class_pakettikauppa->save_order_services(Tools::getValue('id_cart'), $selected_services);
         if ($result) {
             echo true;
         }
@@ -145,7 +140,12 @@ switch (Tools::getValue('action')) {
             die('order_not_found');
         }
 
-        $selected_services = Tools::getValue('additional_services');
+        $selected_services = array();
+        $services_params = (!empty(Tools::getValue('services_params'))) ? Tools::getValue('services_params') : array();
+        $update_services = (!empty(Tools::getValue('additional_services'))) ? Tools::getValue('additional_services') : array();
+        foreach ($update_services as $service_code) {
+            $selected_services[$service_code] = (isset($services_params[$service_code])) ? $services_params[$service_code] : '';
+        }
 
         $result = $class_pakettikauppa->sql->update_row(array(
             'table' => 'orders',

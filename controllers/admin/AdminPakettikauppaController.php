@@ -147,7 +147,7 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'align' => 'center',
                 'havingFilter' => false,
                 'orderby' => false,
-                'hint' => $this->l('You can set additional services in order edit page. COD service adding automatically.'),
+                'hint' => $this->l('You can set additional services in order edit page.'),
             ),
         );
     }
@@ -261,15 +261,8 @@ class AdminPakettikauppaController extends ModuleAdminController
         $selected_services = $this->core->services->get_order_services($cart_id);
 
         $is_cod = $this->core->services->payment_is_cod($order->module);
-        
-        $dangerous_goods = $this->core->services->get_order_dangerous_goods($order);
-        if (!empty($dangerous_goods['weight'])) {
-            if ($this->core->services->add_service_to_order($cart_id, '3143')) {
-                $selected_services[] = '3143';
-            }
-        }
 
-        foreach ($selected_services as $service_code) {
+        foreach ($selected_services as $service_code => $service_value) {
             if (!isset($additional_services[$service_code])) {
                 continue;
             }

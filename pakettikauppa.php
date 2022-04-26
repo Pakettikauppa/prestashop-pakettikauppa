@@ -1104,6 +1104,12 @@ class Pakettikauppa extends CarrierModule
         if ($is_cod) {
             $this->core->services->add_service_to_order($params['cart']->id, $this->core->services->get_service_code('cod'));
         }
+
+        $dangerous_goods = $this->core->services->get_order_dangerous_goods($params['order']);
+        if (!empty($dangerous_goods['weight'])) {
+            $service_code = $this->core->services->get_service_code('dangerous');
+            $this->core->services->add_service_to_order($params['cart']->id, $service_code);
+        }
     }
 
     public function hookDisplayAdminOrder($id_order)
