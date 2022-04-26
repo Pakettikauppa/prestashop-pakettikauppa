@@ -13,49 +13,68 @@
           {if $payment_is_cod}
             {*assign var=disabled value=true*} {* Disabled, because not needed this *}
           {/if}
-          {*assign var=have_param value=true*} {* Disabled, because there is no option to save param value *}
+          {assign var=have_param value=true}
           {assign var=info_param value="(`$order_amount` `$currency->symbol`)"}
         {/if}
+        {if $code == 3102}
+          {assign var=have_param value=true}
+        {/if}
         {if $code == 3143}
-          {*assign var=have_param value=true*} {* Disabled, because there is no option to save param value *}
-          {if !empty($dangerous_goods['weight'])}
-            {assign var=info_param value="(`$dangerous_goods['weight']` `$weight_unit`)"}
-          {/if}
+          {assign var=have_param value=true}
+          {assign var=info_param value="(`$dangerous_goods['weight']` `$weight_unit`)"}
         {/if}
         <div class="row">
-          <div class="col-lg-{if $have_param}6{else}12{/if} service_cb">
-            <input id="service_{$code}" type="checkbox" name="additional_services[]" value="{$code}" {if $code|in_array:$selected_additional_services}checked{/if} {if $disabled}disabled{/if}>
+          <div class="service_cb">
+            <input id="service_{$code}" type="checkbox" name="additional_services[]" value="{$code}" {if isset($selected_additional_services[$code])}checked{/if} {if $disabled}disabled{/if}>
             {if $disabled}
               <input type="hidden" name="additional_services[]" value="{$code}">
             {/if}
             <label for="service_{$code}" class="noselect">
               {$service->name}
             </label>
-            <span class="service_info">{$info_param}</span>
+            <span class="service_info" title="{l s='Value from order' mod='pakettikauppa'}">{$info_param}</span>
           </div>
           {if $have_param}
+            {assign var=param_title value=''}
+            {assign var=param_value value=''}
+            {assign var=param_type value=''}
+            {assign var=param_min value=''}
+            {assign var=param_max value=''}
+            {assign var=param_step value=''}
+            {assign var=param_unit value=''}
+
             {if $code == 3101}
               {assign var=param_title value={l s='C.O.D. amount' mod='pakettikauppa'}}
               {assign var=param_value value=$order_amount}
-              {assign var=param_type value='price'}
+              {assign var=param_type value='number'}
+              {assign var=param_min value='0'}
+              {assign var=param_step value='0.01'}
+              {assign var=param_unit value=$currency->symbol}
+            {elseif $code == 3102}
+              {assign var=param_title value={l s='Packages number' mod='pakettikauppa'}}
+              {assign var=param_value value=1}
+              {assign var=param_type value='number'}
+              {assign var=param_min value='1'}
+              {assign var=param_step value='1'}
             {elseif $code == 3143}
               {assign var=param_title value={l s='DG weight' mod='pakettikauppa'}}
               {assign var=param_value value=$dangerous_goods['weight']}
-              {assign var=param_type value='weight'}
-            {else}
-              {assign var=param_title value=''}
-              {assign var=param_value value=''}
-              {assign var=param_type value=''}
+              {assign var=param_type value='number'}
+              {assign var=param_min value='0'}
+              {assign var=param_step value='0.001'}
+              {assign var=param_unit value=$weight_unit}
             {/if}
-            <div class="col-lg-6 service_param">
+            
+            {if !empty($selected_additional_services[$code])}
+              {assign var=param_value value=$selected_additional_services[$code]}
+            {/if}
+
+            <div class="service_param">
               <label for="service_{$code}_param">
                 {$param_title}:
               </label>
-              {if $param_type === 'price'}
-                <input id="service_{$code}_param" type="number" class="fixed-width-sm" name="services_params[{$code}]" value="{$param_value}" min="0" step="0.01"/> {$currency->symbol}
-              {/if}
-              {if $param_type === 'weight'}
-                <input id="service_{$code}_param" type="number" class="fixed-width-sm" name="services_params[{$code}]" value="{$param_value}" min="0" step="0.001"/> {$weight_unit}
+              {if $param_type === 'number'}
+                <input id="service_{$code}_param" type="number" class="fixed-width-sm" name="services_params[{$code}]" value="{$param_value}" min="{$param_min}" max="{$param_max}" step="{$param_step}"/> {$param_unit}
               {/if}
             </div>
           {/if}

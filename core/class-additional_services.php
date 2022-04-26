@@ -15,21 +15,20 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       $this->core = $module;
     }
 
-    public function get_order_services($id_cart, $sql_data = false)
+    public function get_order_services($id_cart, $sql_selected_services = false)
     {
-      if (empty($sql_data)) {
-        $sql_selected_services = $this->core->sql->get_single_row(array(
+      if (empty($sql_selected_services)) {
+        $values_from_sql = $this->core->sql->get_single_row(array(
           'table' => 'orders',
           'get_values' => array('additional_services'),
           'where' => array(
             'id_cart' => $id_cart,
           ),
         ));
-      } else {
-        $sql_selected_services = $sql_data;
+        $sql_selected_services = $values_from_sql['additional_services'];
       }
 
-      $selected_services = (!empty($sql_selected_services['additional_services'])) ? unserialize($sql_selected_services['additional_services']) : array();
+      $selected_services = (!empty($sql_selected_services)) ? unserialize($sql_selected_services) : array();
       if (empty($selected_services)) { //If unserialize return false
         $selected_services = array();
       }
@@ -56,6 +55,8 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
         return false;
       }
 
+      $service_code = $this->get_service_code($service_code); //If got service association key
+
       $sql_selected_services = $this->core->sql->get_single_row(array(
           'table' => 'orders',
           'get_values' => array('method_code', 'additional_services'),
@@ -67,10 +68,9 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
       $available_services = $this->core->api->get_additional_services($sql_selected_services['method_code']);
       $selected_services = $this->get_order_services($id_cart, $sql_selected_services['additional_services']);
 
-      if (!in_array($service_code, $selected_services) && isset($available_services[$service_code])) {
-        $selected_services[] = $service_code;
+      if (!isset($selected_services[$service_code]) && isset($available_services[$service_code])) {
+        $selected_services[$service_code] = '';
         $this->save_order_services($id_cart, $selected_services);
-
         return true;
       }
 
@@ -210,10 +210,13 @@ if ( ! class_exists(__NAMESPACE__ . '\AdditionalServices') ) {
        * Required: order
        */
       if ($service_code == '3143' && !empty($required_data['order'])) {
-        $dangerous_goods = $this->get_order_dangerous_goods($required_data['order']);
-        if (!empty($dangerous_goods['weight'])) {
+        if (empty($required_data['weight'])) {
+          $dangerous_goods = $this->get_order_dangerous_goods($required_data['order']);
           $service_params['params']['lqweight'] = $dangerous_goods['weight'];
           $service_params['params']['lqcount'] = $dangerous_goods['count'];
+        } else {
+          $service_params['params']['lqweight'] = $required_data['weight'];
+          $service_params['params']['lqcount'] = 1;
         }
       }
 

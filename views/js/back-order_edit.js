@@ -16,8 +16,10 @@ function pk_toggle_service_params(elem = "") {
     var service_param = $(all_services[i]).closest(".service_cb").siblings(".service_param").find("input");
     if (!all_services[i].checked) {
       $(service_param).prop('disabled', true);
+      $(service_param).closest(".service_param").slideUp("fast");
     } else {
       $(service_param).prop('disabled', false);
+      $(service_param).closest(".service_param").slideDown("fast");
     }
   }
 }

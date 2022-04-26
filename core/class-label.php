@@ -66,10 +66,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $all_additional_services = $this->core->api->get_additional_services($ship_detail['method']);
       $additional_services = array();
 
-      $selected_services = (!empty($ship_detail['services'])) ? unserialize($ship_detail['services']) : array();
-      if (empty($selected_services)) { //If unserialize return false
-        $selected_services = array();
-      }
+      $selected_services = $this->core->services->get_order_services(false, $ship_detail['services']);
 
       /* Pickup points */
       if (!empty($ship_detail['point'])) {
@@ -80,28 +77,33 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       }
 
       /* COD */
-      $service = $this->core->services->get_service_params($ship_detail['method'], 'cod', array( 'payment_module' => $order->module, 'amount' => $order->getOrdersTotalPaid(), 'check_payment' => false ));
+      $service_code = $this->core->services->get_service_code('cod');
+      $amount = (!empty($selected_services[$service_code])) ? $selected_services[$service_code] : $order->getOrdersTotalPaid();
+      $service = $this->core->services->get_service_params($ship_detail['method'], 'cod', array( 'payment_module' => $order->module, 'amount' => $amount, 'check_payment' => false ));
       foreach ($service['params'] as $service_param_key => $service_param_value) {
-        if (in_array($service['service'], $selected_services)) {
+        if (isset($selected_services[$service['service']])) {
           $additional_services[$service['service']][$service_param_key] = $service_param_value;
         }
       }
 
       /* Multiple shipments */
-      $total_shipments = 1; //TODO: Make to work
+      $service_code = $this->core->services->get_service_code('multiple');
+      $total_shipments = (!empty($selected_services[$service_code])) ? $selected_services[$service_code] : 1;
       if ($total_shipments > 1) {
         $service = $this->core->services->get_service_params($ship_detail['method'], 'multiple', array( 'count' => $total_shipments ));
         foreach ($service['params'] as $service_param_key => $service_param_value) {
-          if (in_array($service['service'], $selected_services)) {
+          if (isset($selected_services[$service['service']])) {
             $additional_services[$service['service']][$service_param_key] = $service_param_value;
           }
         }
       }
 
       /* Dangerous goods */
-      $service = $this->core->services->get_service_params($ship_detail['method'], 'dangerous', array( 'order' => $order ));
+      $service_code = $this->core->services->get_service_code('dangerous');
+      $dg_weight = (!empty($selected_services[$service_code])) ? $selected_services[$service_code] : '';
+      $service = $this->core->services->get_service_params($ship_detail['method'], 'dangerous', array( 'order' => $order, 'weight' => $dg_weight ));
       foreach ($service['params'] as $service_param_key => $service_param_value) {
-        if (in_array($service['service'], $selected_services)) {
+        if (isset($selected_services[$service['service']])) {
           $additional_services[$service['service']][$service_param_key] = $service_param_value;
         }
       }
@@ -111,7 +113,7 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
         if (isset($additional_services[$service_code])) {
           continue;
         }
-        if (in_array($service_code, $selected_services)) {
+        if (isset($selected_services[$service_code])) {
           $additional_services[$service_code] = array();
         }
       }
