@@ -251,18 +251,23 @@ if ( ! class_exists(__NAMESPACE__ . '\Label') ) {
       $info->setReference($params['info']['reference']);
       $info->setCurrency($params['info']['currency']);
 
-      $parcel = new \Pakettikauppa\Shipment\Parcel();
-      $parcel->setReference($params['parcel']['reference']);
-      $parcel->setWeight($params['parcel']['weight']);
-      $parcel->setContents($params['parcel']['contents']);
-
       $shipment = new \Pakettikauppa\Shipment();
       $shipment->setShippingMethod($params['shipment']['method']);
       $shipment->setSender($sender);
       $shipment->setReceiver($receiver);
       $shipment->setShipmentInfo($info);
-      $shipment->addParcel($parcel);
-      
+
+      $total_parcels = (! empty($params['additional_services']['3102']['count'])) ? $params['additional_services']['3102']['count'] : 1;
+      for ($i = 1; $i <= $total_parcels; $i++) {
+        $weight = (float)$params['parcel']['weight'] / (int)$total_parcels;
+
+        $parcel = new \Pakettikauppa\Shipment\Parcel();
+        $parcel->setReference($params['parcel']['reference']);
+        $parcel->setWeight($weight);
+        $parcel->setContents($params['parcel']['contents']);
+        $shipment->addParcel($parcel);
+      }
+    
       foreach ($params['additional_services'] as $service_key => $service_params) {
         $additional_service = new \Pakettikauppa\Shipment\AdditionalService();
         $additional_service->setServiceCode($service_key);
