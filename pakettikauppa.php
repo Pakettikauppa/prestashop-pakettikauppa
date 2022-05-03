@@ -40,7 +40,6 @@ class Pakettikauppa extends CarrierModule
         'actionOrderStatusPostUpdate',
         'actionProductUpdate',
         'actionValidateOrder',
-        'backOfficeHeader',
         'displayAdminOrder',
         'displayAdminProductsExtra',
         'displayBackOfficeHeader',
@@ -802,33 +801,14 @@ class Pakettikauppa extends CarrierModule
 
     /**
      * Add the CSS & JavaScript files you want to be loaded in the BO.
-     * Prestashop 1.6-1.7.6
-     */
-    public function hookBackOfficeHeader()
-    {
-        if (version_compare(_PS_VERSION_, '1.7.7', '<')) {
-            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
-
-            if (Tools::getValue('module_name') == $this->name) {
-                $this->context->controller->addJquery();
-                $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
-            }
-        }
-    }
-
-    /**
-     * Add the CSS & JavaScript files you want to be loaded in the BO.
-     * Prestashop 1.7.7+
      */
     public function hookDisplayBackOfficeHeader()
     {
-        if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
-            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
+        $this->context->controller->addCSS($this->_path . 'views/css/back.css');
 
-            if (Tools::getValue('configure') == $this->name) {
-                $this->context->controller->addJquery();
-                $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
-            }
+        if (Tools::getValue('configure') == $this->name) {
+            $this->context->controller->addJquery();
+            $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
         }
     }
 
@@ -1311,6 +1291,9 @@ class Pakettikauppa extends CarrierModule
         }
 
         $template = 'page-admin_product.tpl';
+        if (version_compare(_PS_VERSION_, '1.7', '<')) {
+            $template = 'page-admin_product_16.tpl';
+        }
 
         $product_params = array();
         $sql_product = $this->core->sql->get_single_row(array(
