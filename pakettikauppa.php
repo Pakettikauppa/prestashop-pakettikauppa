@@ -40,11 +40,12 @@ class Pakettikauppa extends CarrierModule
         'actionOrderStatusPostUpdate',
         'actionProductUpdate',
         'actionValidateOrder',
-        'backOfficeHeader',
         'displayAdminOrder',
         'displayAdminProductsExtra',
+        'displayBackOfficeHeader',
         'displayCarrierExtraContent',
         'displayCarrierList',
+        'displayHeader',
         'header',
         'sendMailAlterTemplateVars',
         'updateCarrier',
@@ -801,11 +802,13 @@ class Pakettikauppa extends CarrierModule
     /**
      * Add the CSS & JavaScript files you want to be loaded in the BO.
      */
-    public function hookBackOfficeHeader()
+    public function hookDisplayBackOfficeHeader()
     {
+        $module_name = (version_compare(_PS_VERSION_, '1.7', '>=')) ? Tools::getValue('configure') : Tools::getValue('module_name');
+
         $this->context->controller->addCSS($this->_path . 'views/css/back.css');
 
-        if (Tools::getValue('module_name') == $this->name) {
+        if ($module_name == $this->name) {
             $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
         }
@@ -832,9 +835,13 @@ class Pakettikauppa extends CarrierModule
 
     /**
      * Add the CSS & JavaScript files you want to be added on the FO.
+     * Prestashop 1.6-1.7.6
      */
     public function hookHeader()
     {
+        if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
+            return;
+        }
         /*** Load style and script files ***/
         $this->context->controller->addJS($this->_path . 'views/js/dropdown.js');
         $this->context->controller->addCSS($this->_path . 'views/css/dropdown.css');
@@ -847,6 +854,33 @@ class Pakettikauppa extends CarrierModule
             $this->context->controller->addJS($this->_path . 'views/js/front_16.js');
             $this->context->controller->addCSS($this->_path . 'views/css/front_16.css');
         }
+
+        /*** Load global script variables ***/
+        if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
+            $this->context->smarty->assign(array(
+                'ajax_url' => $this->_path . 'ajax.php',
+                'configs' => array(
+                    'autoselect' => Configuration::get('PAKETTIKAUPPA_AUTO_SELECT'),
+                ),
+            ));
+
+            return $this->context->smarty->fetch($this->local_path . 'views/templates/front/checkout_header.tpl');
+        }
+    }
+
+    /**
+     * Add the CSS & JavaScript files you want to be added on the FO.
+     * Prestashop 1.7.7+
+     */
+    public function hookDisplayHeader()
+    {
+        /*** Load style and script files ***/
+        $this->context->controller->addJS($this->_path . 'views/js/dropdown.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/dropdown.css');
+
+        $this->context->controller->addJS($this->_path . 'views/js/front_global.js');
+        $this->context->controller->addJS($this->_path . 'views/js/front_17.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/front_17.css');
 
         /*** Load global script variables ***/
         if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
@@ -1154,7 +1188,14 @@ class Pakettikauppa extends CarrierModule
             $selected_services = $this->core->services->get_order_services($order->id_cart);
 
             if (!empty($pakketikauppa_order['track_number'])) {
-                $shipping_labels[] = $pakketikauppa_order['track_number'];
+                if (strpos($pakketikauppa_order['track_number'], ',') !== false) {
+                    $all_labels = explode(',', $pakketikauppa_order['track_number']);
+                    foreach ($all_labels as $label) {
+                        $shipping_labels[] = $label;
+                    }
+                } else {
+                    $shipping_labels[] = $pakketikauppa_order['track_number'];
+                }
             }
 
             if ($pakketikauppa_carrier['has_pp']) {
@@ -1199,7 +1240,7 @@ class Pakettikauppa extends CarrierModule
             'selected_additional_services' => $selected_services,
             'payment_is_cod' => $is_cod,
             'order_amount' => Tools::ps_round($order->getOrdersTotalPaid(), 2),
-            'currency' =>  $this->context->currency,
+            'currency' => (version_compare(_PS_VERSION_, '1.7', '>=')) ? $this->context->currency->symbol : $this->context->currency->sign,
             'dangerous_goods' => $dangerous_goods,
             'weight_unit' => $this->l('kg'),
         ));
@@ -1252,6 +1293,9 @@ class Pakettikauppa extends CarrierModule
         }
 
         $template = 'page-admin_product.tpl';
+        if (version_compare(_PS_VERSION_, '1.7', '<')) {
+            $template = 'page-admin_product_16.tpl';
+        }
 
         $product_params = array();
         $sql_product = $this->core->sql->get_single_row(array(

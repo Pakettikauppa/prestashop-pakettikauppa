@@ -1,7 +1,7 @@
 {foreach from=$all_sections item=section}
   <hr>
   <div class="separation product-tab">
-    {include file="{$template_parts_path}/section-title.tpl" title="{$section['title']}" help="{$section['help']}"}
+    {include file="{$template_parts_path}/section-title.tpl" size="h2" title="{$section['title']}" help="{$section['help']}"}
 
     <div class="row">
       {foreach from=$section['fields'] item=field}
