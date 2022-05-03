@@ -804,9 +804,11 @@ class Pakettikauppa extends CarrierModule
      */
     public function hookDisplayBackOfficeHeader()
     {
+        $module_name = (version_compare(_PS_VERSION_, '1.7.7', '>=')) ? Tools::getValue('configure') : Tools::getValue('module_name');
+        
         $this->context->controller->addCSS($this->_path . 'views/css/back.css');
 
-        if (Tools::getValue('configure') == $this->name) {
+        if ($module_name == $this->name) {
             $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . 'views/js/back-settings.js');
         }
