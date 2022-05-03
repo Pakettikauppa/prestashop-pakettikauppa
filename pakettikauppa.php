@@ -1154,7 +1154,14 @@ class Pakettikauppa extends CarrierModule
             $selected_services = $this->core->services->get_order_services($order->id_cart);
 
             if (!empty($pakketikauppa_order['track_number'])) {
-                $shipping_labels[] = $pakketikauppa_order['track_number'];
+                if (strpos($pakketikauppa_order['track_number'], ',') !== false) {
+                    $all_labels = explode(',', $pakketikauppa_order['track_number']);
+                    foreach ($all_labels as $label) {
+                        $shipping_labels[] = $label;
+                    }
+                } else {
+                    $shipping_labels[] = $pakketikauppa_order['track_number'];
+                }
             }
 
             if ($pakketikauppa_carrier['has_pp']) {
@@ -1199,7 +1206,7 @@ class Pakettikauppa extends CarrierModule
             'selected_additional_services' => $selected_services,
             'payment_is_cod' => $is_cod,
             'order_amount' => Tools::ps_round($order->getOrdersTotalPaid(), 2),
-            'currency' =>  $this->context->currency,
+            'currency' => (version_compare(_PS_VERSION_, '1.7', '>=')) ? $this->context->currency->symbol : $this->context->currency->sign,
             'dangerous_goods' => $dangerous_goods,
             'weight_unit' => $this->l('kg'),
         ));

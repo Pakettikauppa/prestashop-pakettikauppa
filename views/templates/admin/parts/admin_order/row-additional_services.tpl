@@ -14,7 +14,7 @@
             {*assign var=disabled value=true*} {* Disabled, because not needed this *}
           {/if}
           {assign var=have_param value=true}
-          {assign var=info_param value="(`$order_amount` `$currency->symbol`)"}
+          {assign var=info_param value="(`$order_amount` `$currency`)"}
         {/if}
         {if $code == 3102}
           {assign var=have_param value=true}
@@ -49,7 +49,7 @@
               {assign var=param_type value='number'}
               {assign var=param_min value='0'}
               {assign var=param_step value='0.01'}
-              {assign var=param_unit value=$currency->symbol}
+              {assign var=param_unit value=$currency}
             {elseif $code == 3102}
               {assign var=param_title value={l s='Packages number' mod='pakettikauppa'}}
               {assign var=param_value value=1}
