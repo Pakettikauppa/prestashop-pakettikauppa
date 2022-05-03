@@ -120,12 +120,16 @@
 }
 .pakettikauppa.block_in_order .pk-row-services .service_param {
   margin-left: 30px;
+  width: 100%;
 }
 .pakettikauppa.block_in_order .pk-row-services .service_param label {
   min-width: 100px;
 }
 .pakettikauppa.block_in_order .pk-row-services .service_param input {
   display: inline-block;
+}
+.pakettikauppa.block_in_order .pk-row-services .service_param input[type=number] {
+  max-width: 100px;
 }
 .pakettikauppa.block_in_order .pk-row-labels {
   margin-top: 20px;
