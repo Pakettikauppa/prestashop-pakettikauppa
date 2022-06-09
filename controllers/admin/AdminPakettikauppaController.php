@@ -24,41 +24,74 @@
  *
  */
 
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Client.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Sender.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Receiver.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/AdditionalService.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Info.php');
-require_once('vendor/pakettikauppa/api-library/src/Pakettikauppa/Shipment/Parcel.php');
-
-
+include_once(dirname(__FILE__) . '/../../init.php');
 
 class AdminPakettikauppaController extends ModuleAdminController
 {
+    protected $core;
+    protected $empty_value = '—';
+
     public function __construct()
     {
+        parent::__construct();
+
+        $this->core = new PS_Pakettikauppa(array(
+            'translates' => array(
+                'error_order_object' => $this->l('Cant load Order object'),
+                'error_ship_not_found' => $this->l('Shipment information not found'),
+                'error_required_postcode' => $this->l('Sender postcode is required'),
+                'error_failed_get_tracking' => $this->l('Failed get tracking code'),
+                'error_tracking_empty' => $this->l('Empty tracking code value'),
+                'error_label_pdf_empty' => $this->l('Not received label PDF'),
+                'error_from_api' => $this->l('Got error from Pakettikauppa server'),
+            ),
+            'services_translates' => array(
+                '3101' => $this->l('Cash on delivery'),
+                '3102' => $this->l('Multi-package'),
+                '3104' => $this->l('Fragile'),
+                '3106' => $this->l('Saturday delivery'),
+                '3143' => $this->l('Small amount of hazardous substance'),
+                '3146' => $this->l('Pickup reminder by letter'),
+                '3163' => $this->l('To be handed over in person'),
+                '3164' => $this->l('Delivery without acknowledging the recipient'),
+                '3165' => $this->l('Extension of shelf life'),
+                '3166' => $this->l('Call before distribution'),
+                '3174' => $this->l('Oversized'),
+                '3376' => $this->l('Blocking of the control to the outdoor vending machine'),
+                '9902' => $this->l('Transaction code'),
+                //'9904' => $this->l(''),
+            ),
+        ));
+
         $this->bootstrap = true;
-        $this->table = 'pakettikauppa';
+        $this->table = $this->core->sql->get_table_name('orders', '');
         $this->allow_export = true;
-        $this->_defaultOrderBy = 'id_pakettikauppa';
+        $this->_defaultOrderBy = 'id';
         $this->_defaultOrderWay = 'DESC';
         $this->list_no_link = true;
-
+        $this->addRowAction('Pdf');
+        $this->identifier = 'id_cart';
+        $this->simple_header = false;
 
         $this->context = Context::getContext();
-        date_default_timezone_set("Asia/Calcutta");
-        $this->_select = "o.id_order,concat(c.firstname,' ',c.lastname) as customer_name,ROUND(o.total_paid,2) as total,a.id_track,a.id_cart as PDF";
 
+        $this->_select = "o.id_order,
+            concat(c.firstname,' ',c.lastname) as customer_name,
+            ROUND(o.total_paid,2) as total,
+            a.track_number as id_track,
+            a.id_cart as pickup_point,
+            a.id_carrier as id_carrier,
+            a.id_cart as services";
         $this->_join = 'inner join ' . _DB_PREFIX_ . 'orders o on a.id_cart= o.id_cart inner join ' . _DB_PREFIX_ . 'customer c on o.id_customer=c.id_customer';
+        $this->_orderBy = 'id_order';
+        $this->_orderWay = 'DESC';
 
         $this->fields_list = array(
-
-
             'id_order' => array(
                 'title' => $this->l('Order ID'),
-                'width' => 'auto',
+                'class' => 'fixed-width-xs',
                 'type' => 'text',
+                'callback' => 'printOrderLink',
                 'search' => true,
                 'align' => 'center',
                 'havingFilter' => true
@@ -73,9 +106,27 @@ class AdminPakettikauppaController extends ModuleAdminController
             ),
             'total' => array(
                 'title' => $this->l('Total Amount'),
+                'class' => 'fixed-width-xs',
+                'type' => 'text',
+                'search' => false,
+                'align' => 'center',
+                'havingFilter' => true
+            ),
+            'id_carrier' => array(
+                'title' => $this->l('Carrier'),
                 'width' => 'auto',
                 'type' => 'text',
-                'search' => true,
+                'callback' => 'getCarrierName',
+                'search' => false, //Disabled, because search with callback not working
+                'align' => 'center',
+                'havingFilter' => true
+            ),
+            'pickup_point' => array(
+                'title' => $this->l('Pickup point'),
+                'width' => 'auto',
+                'type' => 'text',
+                'callback' => 'getPickupName',
+                'search' => false, //Disabled, because search with callback not working
                 'align' => 'center',
                 'havingFilter' => true
             ),
@@ -85,22 +136,20 @@ class AdminPakettikauppaController extends ModuleAdminController
                 'type' => 'text',
                 'search' => true,
                 'align' => 'center',
-                'havingFilter' => true
+                'havingFilter' => true,
             ),
-            'PDF' => array(
-                'title' => $this->l('PDF'),
+            'services' => array(
+                'title' => $this->l('Use services'),
                 'width' => 'auto',
                 'type' => 'text',
-                'callback' => 'printPDFIcons',
-                'search' => true,
+                'callback' => 'additionalServices',
+                'search' => false,
                 'align' => 'center',
-                'havingFilter' => true
+                'havingFilter' => false,
+                'orderby' => false,
+                'hint' => $this->l('You can set additional services in order edit page.'),
             ),
-
         );
-
-        parent::__construct();
-
     }
 
     public function initToolbar()
@@ -112,104 +161,130 @@ class AdminPakettikauppaController extends ModuleAdminController
 
     public function init()
     {
-
         parent::init();
         $this->bootstrap = true;
-        $id_order = DB::getInstance()->ExecuteS("Select id_order from " . _DB_PREFIX_ . "orders where id_cart=" . Tools::getValue('id_cart'));
-        if (Tools::getValue('submitAction') == 'generateShippingSlipPDF') {
-            $order = new Order((int)$id_order[0]['id_order']);
-            if (!Validate::isLoadedObject($order)) {
-                throw new PrestaShopException('Can\'t load Order object');
-            }
-            $order_invoice_collection = $order->getInvoicesCollection();
 
-            if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
-                $client = new \Pakettikauppa\Client(array('test_mode' => true));
+        if (Tools::getValue('submitAction') == 'printShippingSlipPDF' || Tools::getValue('submitAction') == 'regenerateShippingSlipPDF') {
+            $id_order = $this->core->sql->get_single_row(array(
+                'table' => _DB_PREFIX_ . 'orders',
+                'get_values' => array('id_order'),
+                'where' => array(
+                    'id_cart' => Tools::getValue('id_cart'),
+                ),
+            ));
+            if (!isset($id_order['id_order'])) {
+                die($this->l('Failed to get order ID'));
+            }
+            $id_order = (int)$id_order['id_order'];
+
+            if (Tools::getValue('submitAction') == 'printShippingSlipPDF') {
+                $this->core->label->generate_label_pdf($id_order);
             } else {
-                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
+                $this->core->label->generate_label_pdf($id_order, true);
             }
 
-            $sender = new Sender();
-            $sender->setName1(Configuration::get('PAKETTIKAUPPA_STORE_NAME'));
-            $sender->setAddr1(Configuration::get('PAKETTIKAUPPA_STORE_ADDRESS'));
-            $sender->setPostcode(Configuration::get('PAKETTIKAUPPA_POSTCODE'));
-            $sender->setCity(Configuration::get('PAKETTIKAUPPA_CITY'));
-            $sender->setPhone(Configuration::get('PAKETTIKAUPPA_PHONE'));
-            $sender->setCountry(Configuration::get('PAKETTIKAUPPA_COUNTRY'));
-
-
-            $receiver = new Receiver();
-            $address = new Address($params["cart"]->id_address_delivery);
-            $customer_email = new Customer($params["cart"]->id_customer);
-            $receiver->setName1($address->firstname . " " . $address->lastname);
-            $receiver->setAddr1($address->address1 . " " . $address->address2);
-            $receiver->setPostcode($address->postcode);
-            $receiver->setCity($address->city);
-            $receiver->setCountry(DB::getInstance()->ExecuteS('select iso_code from ' . _DB_PREFIX_ . 'country where id_country=' . $address->id_country)[0]['iso_code']);
-            $receiver->setEmail($customer_email->email);
-            $receiver->setPhone($address->phone);
-
-
-            $total_weight = DB::getInstance()->ExecuteS('SELECT o.reference,sum(od.product_weight) as weight FROM `ps_order_detail` od left join ps_orders o on od.id_order=o.id_order WHERE o.id_order=' . $params['id_order']);
-
-            $info = new Info();
-            $info->setReference('12344');
-
-            $ship_detail = DB::getInstance()->ExecuteS('SELECT p.`id_pickup_point`,p.`shipping_method_code`,substring_index(substring_index(c.name, "[", -1),"]", 1) as code FROM `' . _DB_PREFIX_ . 'pakettikauppa` p left join ' . _DB_PREFIX_ . 'carrier c on p.`shipping_method_code`=c.id_carrier WHERE `id_cart`=' . $params["cart"]->id);
-
-            $additional_service = new AdditionalService();
-            $additional_service->addSpecifier('pickup_point_id', $ship_detail[0]['id_pickup_point']);
-
-            $parcel = new Parcel();
-            $parcel->setReference($total_weight[0]['reference']);
-            $parcel->setWeight($total_weight[0]['weight']); // kg
-            $parcel->setContents('Stuff and thingies');
-
-            $shipment = new Shipment();
-            $shipment->setShippingMethod($ship_detail[0]['code']); // shipping_method_code that you can get by using listShippingMethods()
-            $shipment->setSender($sender);
-            $shipment->setReceiver($receiver);
-            $shipment->setShipmentInfo($info);
-            $shipment->addParcel($parcel);
-            $shipment->addAdditionalService($additional_service);
-
-            if (Configuration::get('PAKETTIKAUPPA_COUNTRY') == 1) {
-                $client = new \Pakettikauppa\Client(array('test_mode' => true));
-            } else {
-                $client = new \Pakettikauppa\Client(array('api_key' => Configuration::get('PAKETTIKAUPPA_API_KEY'), 'api_secret' => Configuration::get('PAKETTIKAUPPA_SECRET')));
-            }
-
-            try {
-                if ($client->createTrackingCode($shipment)) {
-                    DB::getInstance()->Execute('update ' . _DB_PREFIX_ . 'pakettikauppa set id_track="' . $shipment->getTrackingCode() . '" where id_cart=' . $params["cart"]->id);
-                    if ($client->fetchShippingLabel($shipment)) {
-                        // TODO set the headers
-                        echo base64_decode($shipment->getPdf());
-                    }
-                }
-            } catch (Exception $ex) {
-                //echo $ex->getMessage();
-            }
+            die($this->l('Failed to generate label PDF'));
         }
     }
 
-    public function setMedia()
+    public function setMedia($isNewTheme = false)
     {
-        parent::setMedia(); // JS files
+        parent::setMedia();
 
-        Tools::addJS(_PS_MODULE_DIR_ . 'purchaseorder/views/js/back.js');
-
+        Media::addJsDef(array(
+            'pakettikauppa_ajax' => _MODULE_DIR_ . $this->module->name . '/ajax.php',                       
+        ));
+        $this->context->controller->addCss(_MODULE_DIR_ . $this->module->name . '/views/css/back.css', 'all');
+        $this->context->controller->addJS(_MODULE_DIR_ . $this->module->name . '/views/js/back-orders_list.js');
     }
 
-
-    public function printPDFIcons($order, $tr)
+    public function printOrderLink($id_order, $row)
     {
-        $this->context->smarty->assign(array(
-            'order' => $order,
-            'tr' => $tr
+        $link = $this->context->link->getAdminLink('AdminOrders').'&id_order='.(int)$id_order.'&vieworder';
+        if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
+            $link = $this->context->link->getAdminLink('AdminOrders', true, ['route' => 'admin_orders_view', 'action' => 'vieworder', 'orderId' => (int)$id_order]);
+        }
+
+        return '<a href="' . $link . '" target="_blank">' . $id_order . '</a>';
+    }
+
+    public function getCarrierName($id_carrier, $tr)
+    {
+        $carrier = new Carrier($id_carrier);
+
+        return (!empty($carrier->name)) ? $carrier->name : $this->empty_value;
+    }
+
+    public function getPickupName($id_cart, $tr)
+    {
+        $method = $this->core->sql->get_single_row(array(
+            'table' => 'orders',
+            'where' => array(
+                'id_cart' => $id_cart
+            ),
         ));
-        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'pakettikauppa/views/templates/admin/_print_pdf_icon_pakettikauppa.tpl');
+
+        if (empty($method)) {
+            return $this->empty_value;
+        }
+
+        $pickup_point = json_decode($this->core->api->get_pickup_info($method['pickup_point_id'], $method['method_code']));
+        if (empty($pickup_point->name)) {
+            return $this->empty_value;
+        }
+
+        return $pickup_point->name . '<br/><small>' . $pickup_point->street_address . ', ' . $pickup_point->city . ', ' . $pickup_point->postcode . ' ' . $pickup_point->country . '</small>';
+    }
+
+    public function displayPdfLink($token, $cart_id)
+    {
+        $tracking_number = $this->core->label->get_tracking_number_from_db($cart_id);
+        
+        $this->context->smarty->assign(array(
+            'order' => $cart_id,
+            'have_label' => ($tracking_number) ? true : false,
+        ));
+
+        return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/table-print_pdf.tpl');
+    }
+
+    public function additionalServices($cart_id, $row_data)
+    {
+        $order = (isset($row_data['id_order'])) ? new \Order((int)$row_data['id_order']) : '';
+
+        if (empty($order)) {
+          return $this->l('Error');
+        }
+
+        $additional_services = $this->core->api->get_additional_services($row_data['method_code']);
+        $selected_services_text = '';
+        $selected_services = $this->core->services->get_order_services($cart_id);
+
+        $is_cod = $this->core->services->payment_is_cod($order->module);
+
+        foreach ($selected_services as $service_code => $service_value) {
+            if (!isset($additional_services[$service_code])) {
+                continue;
+            }
+            if (!empty($selected_services_text)) {
+                $selected_services_text .= ', ';
+            }
+            $selected_services_text .= '<span title="' . $additional_services[$service_code]->name . '">' . $service_code . '</span>';
+        }
+        if (empty($selected_services_text)) {
+            $selected_services_text = '—';
+        }
+
+        $this->context->smarty->assign(array(
+            'order_id' => (isset($row_data['id_order'])) ? $row_data['id_order'] : $cart_id,
+            'cart_id' => $cart_id,
+            'row_data' => $row_data,
+            'additional_services' => $additional_services,
+            'selected_services' => $selected_services,
+            'selected_services_text' => $selected_services_text,
+            'is_cod' => $is_cod,
+        ));
+
+        return $this->context->smarty->fetch($this->core->configs->module_dir . '/views/templates/admin/table-additional_services.tpl');
     }
 }
-
-

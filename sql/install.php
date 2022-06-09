@@ -27,13 +27,15 @@
 $sql = array();
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'pakettikauppa` (
-  `id_pakettikauppa` int(11) NOT NULL,
-  `id_cart` int(11) NOT NULL AUTO_INCREMENT,
-  `id_pickup_point` int(11) NOT NULL,
-  `id_track` varchar(50) NOT NULL,
-  `shipping_method_code` int(11) NOT NULL,
-  PRIMARY KEY (`id_cart`)
-) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21 ;';
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT "ID in this table",
+  `id_cart` int(10) unsigned NOT NULL COMMENT "Row ID in cart table",
+  `id_pickup_point` int(11) NOT NULL COMMENT "Pakettikauppa pickup point ID",
+  `id_provider` int(10) NOT NULL COMMENT "Pakettikauppa provider ID",
+  `id_track` varchar(50) NOT NULL COMMENT "Shipment tracking number",
+  `shipping_method_code` int(11) NOT NULL COMMENT "PS carrier ID",
+  PRIMARY KEY (`id`),
+  UNIQUE (`id_cart`)
+) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21;';
 
 
 foreach ($sql as $query) {
