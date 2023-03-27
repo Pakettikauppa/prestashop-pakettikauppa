@@ -34,7 +34,7 @@ ob_clean();
 
 switch (Tools::getValue('action')) {
     case 'FetchData' :
-        $selected_sql = "SELECT wc.`id_carrier`,c.name FROM `" . _DB_PREFIX_ . "warehouse_carrier` wc inner join " . _DB_PREFIX_ . "carrier c on wc.`id_carrier`=c.`id_reference` WHERE wc.`id_warehouse`='" . Tools::getValue('id_warehouse') . "' AND c.`external_module_name`='pakettikauppa' AND c.`deleted`=0";
+        $selected_sql = "SELECT wc.`id_carrier`,c.name FROM `" . _DB_PREFIX_ . "warehouse_carrier` wc inner join " . _DB_PREFIX_ . "carrier c on wc.`id_carrier`=c.`id_reference` WHERE wc.`id_warehouse`='" . (int) Tools::getValue('id_warehouse') . "' AND c.`external_module_name`='pakettikauppa' AND c.`deleted`=0";
         $selected_carriers = DB::getInstance()->ExecuteS($selected_sql);
         $carriers = DB::getInstance()->ExecuteS("SELECT `id_reference`,`name` FROM `" . _DB_PREFIX_ . "carrier` WHERE is_module=1 and `external_module_name`='pakettikauppa' and deleted=0 and `id_reference` not in (" . str_replace(',c.name', '', $selected_sql) . ")");
 
