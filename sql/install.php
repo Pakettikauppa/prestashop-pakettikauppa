@@ -29,7 +29,7 @@ $sql = array();
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'pakettikauppa` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT "ID in this table",
   `id_cart` int(10) unsigned NOT NULL COMMENT "Row ID in cart table",
-  `id_pickup_point` int(11) NOT NULL COMMENT "Pakettikauppa pickup point ID",
+  `id_pickup_point` varchar(20) NOT NULL COMMENT "Pakettikauppa pickup point ID",
   `id_provider` int(10) NOT NULL COMMENT "Pakettikauppa provider ID",
   `id_track` varchar(50) NOT NULL COMMENT "Shipment tracking number",
   `shipping_method_code` int(11) NOT NULL COMMENT "PS carrier ID",
